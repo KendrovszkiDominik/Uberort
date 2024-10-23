@@ -1,9 +1,9 @@
 ##########################################################
-#                         Epsilon                        #
+#                         Uberort                        #
 ##########################################################
-#Epsilon (or ε) is a mathematical and functional programming langauge made as a fun hobby project
+#Uberort is a mathematical and functional programming langauge made as a fun hobby project
 #It has an open-source compiler written in python that compiles the langauge to efficient c code
-#Instead of instantly stating what is implemented in the langauge let's rather start with what isn't in Epsilon version 1.0:
+#Instead of instantly stating what is implemented in the langauge let's rather start with what isn't in Uberort version 1.0:
 #   -Lists or arrays
 #   -Code branches
 #   -Loops
@@ -33,7 +33,7 @@ print ia + fb
 # ||  or
 # !   not
 
-#Now, let's get into the unique features of Epsilon
+#Now, let's get into the unique features of Uberort
 
 ##########################################################
 #                     Superpositions                     #
@@ -136,7 +136,7 @@ print square(7.3)
 print square(sia)
 #>>> {1.000000, 9.000000, 25.000000, 81.000000}
 
-#Though it may seem limiting that all functions are one-liners, there is nothing you can't to using a single line in Epsilon
+#Though it may seem limiting that all functions are one-liners, there is nothing you can't to using a single line in Uberort
 #Here is an overcomplicated and very inefficient function that calculates the number of divisors of a number to showcase how you can link together different features
 def number_of_divisors(x in Z) => product(first(expon in N: x % all_primes**expon) where 1 with {r2 where none(r2 !% all_primes) with mrange(x)+1 as r2} as all_primes in {Z}) in Z
 print number_of_divisors(840)
@@ -171,10 +171,10 @@ print average(ran_vecs.x**2 + ran_vecs.y**2 < 1) * 4
 #>>> 3.150400
 
 ##########################################################
-#                    Future of Epsilon                   #
+#                    Future of Uberort                   #
 ##########################################################
-#Epsilon will likely get a few updates in the future, adding a few features, fixing some yet unknown bugs, maybe improving some aspects of the language, actually adding loops or multiline functions, but I don't plan to change this language completely
-#After finishing Epsilon I may start working on Epsilon Sharp (or ε#), the object-oriented variant of Epsilon
-#Planned features for Epsilon Sharp includes classes, inheritance, error-handling, polymorphism and dynamic variables
+#Uberort will likely get a few updates in the future, adding a few features, fixing some yet unknown bugs, maybe improving some aspects of the language, actually adding loops or multiline functions, but I don't plan to change this language completely
+#After finishing Uberort I may start working on Uberort Sharp, the object-oriented variant of Uberort
+#Planned features for Uberort Sharp includes classes, inheritance, error-handling, polymorphism and dynamic variables
 #But for now I'm rather focusing on designing this language to reach its potentials
 
