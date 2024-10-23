@@ -1,0 +1,180 @@
+##########################################################
+#                         Epsilon                        #
+##########################################################
+#Epsilon (or ε) is a mathematical and functional programming langauge made as a fun hobby project
+#It has an open-source compiler written in python that compiles the langauge to efficient c code
+#Instead of instantly stating what is implemented in the langauge let's rather start with what isn't in Epsilon version 1.0:
+#   -Lists or arrays
+#   -Code branches
+#   -Loops
+#   -Multi-line functions
+#Instead, this language has better alternatives for all of them
+
+#The variables are just like in other languages with Z standing for int64s and R standing for doubles
+ia in Z = 4
+fb in R = 7.0
+
+#The arithmetic is also what you'd expect from a langauge
+print ia + fb
+#>>> 11.000000
+
+# +   addition
+# -   subtraction
+# *   multiplication
+# **  exponentiation
+# /   long division (float output)
+# //  division (int output)
+# %   modulo
+# !%  is divisible by
+
+#And logic works in a standard way too
+# <= == >= < != >   comparisons
+# &&  and
+# ||  or
+# !   not
+
+#Now, let's get into the unique features of Epsilon
+
+##########################################################
+#                     Superpositions                     #
+##########################################################
+#Superpositions are the main container type of the langauge
+#Though they aren't really containers but rather variables that can hold as many values simultaneously as you need
+#Understanding them is necessary for using this language in the right way, but when you understand them, you're half-way there
+
+#sia will now hold the values 1, 3, 5 and 9 all at once
+sia in Z = {1, 3, 5, 9}
+sib in Z = {1, 9, 40}
+print sia + sib
+#>>> {2, 10, 41, 4, 12, 43, 6, 14, 45, 18, 49}
+#When adding sia and sib together you added each pair of possible values together resulting in even more possible states
+
+##########################################################
+#    Filtering, comprehensions and built-in functions    #
+##########################################################
+#Instead of writing loops for everything you can use filtering and built-in functions
+#You can filter with 'where'; put the 'where' between curly braces to make it a superposition comprehension
+
+#Let's start with a simple smallest common multiple
+a in Z = 10
+b in Z = 15
+r1 in Z = mrange(smaller(a, b)) #Store all the values from 1 to the smaller of a and b
+print a*b // max(r1 where a !% r1 && b !% r1) #The second half gets the biggest number of r1 that's both a divisor of a and b
+#>>> 30
+
+#Here is a simple superposition comprehension
+print {r1 where a !% r1 && b !% r1}
+
+#And this finds all the primes from 2 to 51
+r2 in Z = mrange(50)+1
+#Superposition comprehensions can contain self-referencing, just like this
+primes in Z = {r2 where none(r2 !% primes)}
+print primes
+#>>> {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47}
+
+#You can also circumvent having to write another line for a variable definition by using a with and then creating the variables using the keyword as
+print {ri where ri !% 3 && ri % 7 with range(60) as ri}
+#>>> {3, 6, 9, 12, 15, 18, 24, 27, 30, 33, 36, 39, 45, 48, 51, 54, 57}
+
+#If you want to make the inline variable definition contain self-referencing, you'll need to declare its type to let the compiler know it even before it's used
+#In this example we generate all the primes from 2 to 51 in a single line
+print (rec_inline with {range_inline where none(range_inline !% rec_inline) with mrange(50)+1 as range_inline} as rec_inline in {Z})
+#>>> {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47}
+
+#All the built-in functions in version 1.0 are:
+#Functions for simple numbers:
+#   -sqrt(a) - calculates the square root of the number
+#   -greater(a, b) - results in the greater number
+#   -smaller(a, b) - results in the smaller number
+#   -abs(a) - gets the absolute value of a
+#   -log(a, b) - returns the log of a with base b
+#   -range(a) - results in a superposition of all numbers from 0 to a-1
+#   -mrange(a) - results in a superposition of all numbers from 1 to a
+#   -random(a, b, c) - results in a superposition of c random floats between a and b (returns single value if c not given)
+#   -randi(a, b) - results in a superposition of b random ints between 0 and a-1 (returns single value if b not given)
+#   -All the basic trigonometric functions: sin, cos, tan, asin, acos, atan, tan2
+#   -gauss_pd(a) - gets the probability density of the bell curve (mu=0, sigma=1) at a
+#   -gauss_cd(a) - gets the cumulative distribution of the bell curve (mu=0, sigma=1) at a
+#   -gauss_random(a) - returns a random floats weighted by the bell curve (mu=0, sigma=1) (returns single value if a not given)
+#Functions for superpositions:
+#   -sum(a) - sums together all values of a
+#   -product(a) - multiplies together all values of a
+#   -average(a) - averages the values of a
+#   -all(a) - whether a is always true
+#   -any(a) - whether a is ever true
+#   -none(a) - whether a is always false
+#   -max(a) - finds the biggest value of a
+#   -max(a: b) - finds the a that has the biggest value of b
+#   -len(a) - gets the length of a
+#Functions for sequences:
+#   -first(a: b) - finds the first element of sequence a where b is true
+
+##########################################################
+#                        Sequences                       #
+##########################################################
+#Sequences are not really containers either but rather an infinite sequence of lazily evaluated values
+#Sequences can use recursion in their definition
+
+#After defining the sequence, you can use with to provide default values
+fibs[i] in Z = fibs[i-2] + fibs[i-1] with 0:1, 1:1
+print fibs
+#>>> 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597...
+print fibs[5]
+#>>> 8
+print first(fibs: fibs > 9000)
+#>>> 10946
+
+##########################################################
+#                        Functions                       #
+##########################################################
+#Functions in this langauge are all one-liners
+
+def square(x in R) => x**2 in R
+print square(7.3)
+#>>> 53.290000
+#Mapping has never been easier
+print square(sia)
+#>>> {1.000000, 9.000000, 25.000000, 81.000000}
+
+#Though it may seem limiting that all functions are one-liners, there is nothing you can't to using a single line in Epsilon
+#Here is an overcomplicated and very inefficient function that calculates the number of divisors of a number to showcase how you can link together different features
+def number_of_divisors(x in Z) => product(first(expon in N: x % all_primes**expon) where 1 with {r2 where none(r2 !% all_primes) with mrange(x)+1 as r2} as all_primes in {Z}) in Z
+print number_of_divisors(840)
+#>>> 32
+print first(i in N: number_of_divisors(i) > 32)
+#>>> 1260
+
+##########################################################
+#                         Structs                        #
+##########################################################
+#You can make simple structs to work with complex data types
+
+struct Vec2 = [x in R, y in R]
+def magnitude(v in Vec2) => sqrt(v.x**2 + v.y**2) in R
+print magnitude(Vec2(x:8, y:15))
+#>>> 17.000000
+struct ComplexContainer = [v in Vec2, d in Z, f in R]
+cc in ComplexContainer = ComplexContainer(v: Vec2(x:17, y:4), d: 5, f: -17.4)
+print cc
+#>>> ComplexContainer(v: Vec2(x: 17.000000, y: 4.000000), d: 5, f: -17.400000)
+asd[i] in Vec2 = Vec2(x:2*i, y:i**2)
+print first(asd: magnitude(asd) > 30)
+#>>> Vec2(x: 12.000000, y: 36.000000)
+
+##########################################################
+#                      Randomization                     #
+##########################################################
+print random(-1, 1, 5)
+#>>> {-0.959323, 0.398504, 0.474822, -0.198824, 0.988114}
+ran_vecs in Vec2 = Vec2(x:random(-1, 1, 50), y:random(-1, 1, 50))
+print average(ran_vecs.x**2 + ran_vecs.y**2 < 1) * 4
+#>>> 3.150400
+
+##########################################################
+#                    Future of Epsilon                   #
+##########################################################
+#Epsilon will likely get a few updates in the future, adding a few features, fixing some yet unknown bugs, maybe improving some aspects of the language, actually adding loops or multiline functions, but I don't plan to change this language completely
+#After finishing Epsilon I may start working on Epsilon Sharp (or ε#), the object-oriented variant of Epsilon
+#Planned features for Epsilon Sharp includes classes, inheritance, error-handling, polymorphism and dynamic variables
+#But for now I'm rather focusing on designing this language to reach its potentials
+
