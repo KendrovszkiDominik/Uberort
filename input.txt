@@ -48,6 +48,23 @@ sib in Z = {1, 9, 40}
 print sia + sib
 #>>> {2, 10, 41, 4, 12, 43, 6, 14, 45, 18, 49}
 #When adding sia and sib together you added each pair of possible values together resulting in even more possible states
+print sin(sia)
+#>>> {0.841471, 0.141120, -0.958924, 0.412118}
+#When calling a function on a superposition, it will be called for every possible value / pair of values etc.
+
+##########################################################
+#       Differences between superpositions and sets      #
+##########################################################
+#Now, you may argue that superpositions are just sets with Cartesian operations but the real difference between sets and superpositions can be seen when doing multiple operations on the same superposition
+#For example, you may think that this would result in a cartesian sum:
+print sia + sia
+#>>> {2, 6, 10, 18}
+#The reason for this is that the compiler won't check for values where the state of sia is different in the 2 times it's referenced
+#This is a lame example as you could just multiply sia by 2 but here is another example:
+print sia + sin(sia)
+#>>> {1.841471, 3.141120, 4.041076, 9.412118}
+#If sia was just a set, then sin would return another set and we would get many unwanted values when calculating the cartesian sum
+#But superpositions are smarter than that and it will print out only 1 value for each state of sia
 
 ##########################################################
 #    Filtering, comprehensions and built-in functions    #
