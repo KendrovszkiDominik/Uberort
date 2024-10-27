@@ -1,8 +1,17 @@
 import re
 
+##########################################################
+#                 Uberort compiler v1.0.1                #
+##########################################################
+#New with v1.0.1:
+#Expressions can now be written in multiple lines
+#Minor bug fixes when calling functions
+#Minor rework of with-as statements
+
 file = 'input.txt'
 commented_code = [i.strip() for i in open('input.txt').readlines()]
-code = [i[:i.index('#')] if '#' in i else i for i in commented_code]
+no_comment_code = [i[:i.index('#')] if '#' in i else i for i in commented_code]
+
 
 functions = {'sqrt': 'R', 'gauss_pd':'R', 'gauss_cd':'R', 'sin':'R', 'cos':'R', 'tan':'R', 'asin':'R', 'acos':'R', 'atan':'R', 'atan2':'R'}
 
@@ -103,6 +112,33 @@ def never_leaves(expression):
 
     return True
 
+#check if not in parentheses
+def in_paranth(expression, start=0):
+    last_pos = 0
+    inside = start
+    in_str = False
+    next_ignore = False
+
+    for i0 in range(len(expression)):
+        i = expression[i0]
+        if not in_str:
+            if i in {'(', '[', '{'}:
+                inside += 1
+            elif i in {')', ']', '}'}:
+                inside -= 1
+            elif i == '"':
+                in_str = True
+                next_ignore = False
+        elif next_ignore:
+            next_ignore = False
+        else:
+            if i == '"':
+                in_str = False
+            elif i == '\\':
+                next_ignore = True
+
+    return inside
+
 #cify values seperated by commas
 def cify_attrs(expression, only_second_parts=False, inline_vars=False):
     global where_loops, indentation
@@ -128,7 +164,7 @@ def cify_attrs(expression, only_second_parts=False, inline_vars=False):
                 if inline_vars:
                     variables[outp[-1][0][1]] = outp[-1][1][0]
                     c_code.insert(bef_loop_s, '\t' * indentation + f'{datatype_to_c[outp[-1][1][0]]} {outp[-1][0][1]};')
-                    c_code.append('\t' * indentation + f'{outp[-1][0][1]} = {outp[-1][0][0]};')
+                    c_code.append('\t' * indentation + f'{outp[-1][0][1]} = {outp[-1][0][0]}; //inline variable')
                     #for i in where_loops[starting_where_loops:]:
                     #    indentation -= 1
                     #    c_code.append('\t' * indentation + '}')
@@ -145,6 +181,7 @@ def cify_attrs(expression, only_second_parts=False, inline_vars=False):
     starting_where_loops = len(where_loops)
     outp.append(cify(expression[last_break:], only_second_parts))
     if inline_vars:
+        #print(outp[-1][0][1], outp[-1][1][0])
         variables[outp[-1][0][1]] = outp[-1][1][0]
         c_code.insert(bef_loop_s, '\t' * indentation + f'{datatype_to_c[outp[-1][1][0]]} {outp[-1][0][1]};')
         c_code.append('\t' * indentation + f'{outp[-1][0][1]} = {outp[-1][0][0]};')
@@ -184,7 +221,7 @@ def decompose_type(expression):
     outp.append(expression[last_break:-1])
     return outp
 
-#find the pair of the first parantheses
+#find the pair of the first parantheses, return before, inside and after parts
 def find_pair(expression):
     outp = []
     last_break = 0
@@ -268,7 +305,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
         indentation += 1
         c_code.append('\t' * indentation + f'{datatype_to_c[variables[c_var_name]]} {c_var_name}___l2 = universal_set[{c_var_name}->elements[{c_var_name}___l1]].element.{datatype_to_quant[variables[c_var_name]]};')
         return [f'{c_var_name}___l2', variables[c_var_name]]
-    elif exprnot := re.match(r'^\s*(\w+)\s*\((.*)\)\s*$', expression):  #function call
+    elif exprnot := re.match(r'^\s*(\w+)\s*\((.*)\)\s*$', expression) and not find_pair(expression)[2]:  #function call
         expr = [0] + find_pair(expression)
         fun = expr[1].strip()
         if fun in {'sum', 'max', 'range', 'random', 'randi', 'len', 'product', 'any', 'all', 'none', 'greater', 'first', 'smaller', 'mrange', 'average', 'gauss_random', 'abs', 'log'}:
@@ -290,7 +327,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                             c_code.append('\t' * indentation + f'dy_set_i* {line[1].strip()} = create_set_i();')
                             gen_do = cify(gen[1])
                             gen_where = cify(gen[2])
-                        c_code.append('\t' * indentation + f'if ({gen_where[0]}) '+'{'+f'{c_var_name} += {gen_do[0]}'+';}')
+                        c_code.append('\t' * indentation + f'if ({gen_where[0]}) '+'{'+f'{c_var_name} += {gen_do[0]}'+';} //sum')
                         for i in where_loops[starting_where_loops:]:
                             indentation -= 1
                             c_code.append('\t' * indentation + '}')
@@ -299,7 +336,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                         return [f'{c_var_name}', gen_do[1]]
                     else:
                         attrs = cify_attrs(expr[2])[0]
-                        c_code.append('\t' * indentation + f'{c_var_name} += {attrs[0]};')
+                        c_code.append('\t' * indentation + f'{c_var_name} += {attrs[0]}; //sum')
                         for i in where_loops[starting_where_loops:]:
                             indentation -= 1
                             c_code.append('\t' * indentation + '}')
@@ -331,7 +368,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                                 gen_do = cify(gen[1])
                                 gen_where = cify(gen[2])
                             key = cify(key)
-                            c_code.append('\t' * indentation + f'if ({gen_where[0]} && ({c_key_name} < {key[0]})) ' + '{' + f'{c_var_name} = {gen_do[0]}; {c_key_name} = {key[0]};' + '}')
+                            c_code.append('\t' * indentation + f'if ({gen_where[0]} && ({c_key_name} < {key[0]})) ' + '{' + f'{c_var_name} = {gen_do[0]}; {c_key_name} = {key[0]};' + '} //max')
                             for i in where_loops[starting_where_loops:]:
                                 indentation -= 1
                                 c_code.append('\t' * indentation + '}')
@@ -343,7 +380,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                             attrs = cify_attrs(value)[0]
                             key = cify(key)
                             # bonus_c_variables['___o_l'] -= 1
-                            c_code.append('\t' * indentation + f'if ({c_key_name} < {key[0]}) ' + '{' + f'{c_var_name} = {attrs[0]}; {c_key_name} = {key[0]};' + '}')
+                            c_code.append('\t' * indentation + f'if ({c_key_name} < {key[0]}) ' + '{' + f'{c_var_name} = {attrs[0]}; {c_key_name} = {key[0]};' + '} //max')
                             for i in where_loops[starting_where_loops:]:
                                 indentation -= 1
                                 c_code.append('\t' * indentation + '}')
@@ -367,7 +404,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                                 c_code.append('\t' * indentation + f'dy_set_i* {line[1].strip()} = create_set_i();')
                                 gen_do = cify(gen[1])
                                 gen_where = cify(gen[2])
-                            c_code.append('\t' * indentation + f'if ({gen_where[0]} && ({c_key_name} < {gen_do[0]})) ' + '{' + f'{c_var_name} = {gen_do[0]}; {c_key_name} = {gen_do[0]};' + '}')
+                            c_code.append('\t' * indentation + f'if ({gen_where[0]} && ({c_key_name} < {gen_do[0]})) ' + '{' + f'{c_var_name} = {gen_do[0]}; {c_key_name} = {gen_do[0]};' + '} //max - key')
                             for i in where_loops[starting_where_loops:]:
                                 indentation -= 1
                                 c_code.append('\t' * indentation + '}')
@@ -379,7 +416,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                             attrs = cify_attrs(value)[0]
                             key = cify(value)
                             # bonus_c_variables['___o_l'] -= 1
-                            c_code.append('\t' * indentation + f'if ({c_key_name} < {key[0]}) ' + '{' + f'{c_var_name} = {attrs[0]}; {c_key_name} = {key[0]};' + '}')
+                            c_code.append('\t' * indentation + f'if ({c_key_name} < {key[0]}) ' + '{' + f'{c_var_name} = {attrs[0]}; {c_key_name} = {key[0]};' + '} //max - key')
                             for i in where_loops[starting_where_loops:]:
                                 indentation -= 1
                                 c_code.append('\t' * indentation + '}')
@@ -390,7 +427,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                 case 'range': #range comprehension
                     sp_name = f'___c_s_{bonus_c_variables["___c_s"]}'
                     bonus_c_variables['___c_s'] += 1
-                    c_code.append('\t' * indentation + f'for (int {sp_name}___l2 = 0; {sp_name}___l2 < {cify(expr[2])[0]}; {sp_name}___l2++)' + '{')
+                    c_code.append('\t' * indentation + f'for (int {sp_name}___l2 = 0; {sp_name}___l2 < {cify(expr[2])[0]}; {sp_name}___l2++)' + '{ //range')
                     variables[sp_name] = '{Z}'
                     where_loops.append(sp_name)
                     indentation += 1
@@ -398,7 +435,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                 case 'mrange':  # range comprehension
                     sp_name = f'___c_s_{bonus_c_variables["___c_s"]}'
                     bonus_c_variables['___c_s'] += 1
-                    c_code.append('\t' * indentation + f'for (int {sp_name}___l2 = 1; {sp_name}___l2 <= {cify(expr[2])[0]}; {sp_name}___l2++)' + '{')
+                    c_code.append('\t' * indentation + f'for (int {sp_name}___l2 = 1; {sp_name}___l2 <= {cify(expr[2])[0]}; {sp_name}___l2++)' + '{ //mrange')
                     variables[sp_name] = '{Z}'
                     where_loops.append(sp_name)
                     indentation += 1
@@ -412,7 +449,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                     if len(attrs) == 3:
                         c_code.append('\t' * indentation + f'for (int {sp_name} = 0; {sp_name} < {attrs[2][0]}; {sp_name}++)' + '{')
                         indentation += 1
-                        c_code.append('\t' * indentation + f'double {rn_name}___l2 = (({attrs[1][0]} - {attrs[0][0]}) * ((float)rand() / RAND_MAX)) + {attrs[0][0]};')
+                        c_code.append('\t' * indentation + f'double {rn_name}___l2 = (({attrs[1][0]} - {attrs[0][0]}) * ((float)rand() / RAND_MAX)) + {attrs[0][0]}; //random')
                         variables[sp_name] = '{R}'
                         where_loops.append(sp_name)
                         return [f'{rn_name}___l2', 'R']
@@ -452,7 +489,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                             c_code.append('\t' * indentation + f'dy_set_i* {line[1].strip()} = create_set_i();')
                             gen_do = cify(gen[1])
                             gen_where = cify(gen[2])
-                        c_code.append('\t' * indentation + f'if ({gen_where[0]}) ' + '{' + f'{c_var_name}++' + ';}')
+                        c_code.append('\t' * indentation + f'if ({gen_where[0]}) ' + '{' + f'{c_var_name}++' + '; //len}')
                         for i in where_loops[starting_where_loops:]:
                             indentation -= 1
                             c_code.append('\t' * indentation + '}')
@@ -462,7 +499,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                     else:
                         attrs = cify_attrs(expr[2])[0]
                         # bonus_c_variables['___o_l'] -= 1
-                        c_code.append('\t' * indentation + f'{c_var_name}++;')
+                        c_code.append('\t' * indentation + f'{c_var_name}++; //len')
                         for i in where_loops[starting_where_loops:]:
                             indentation -= 1
                             c_code.append('\t' * indentation + '}')
@@ -489,7 +526,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                             c_code.append('\t' * indentation + f'dy_set_i* {line[1].strip()} = create_set_i();')
                             gen_do = cify(gen[1])
                             gen_where = cify(gen[2])
-                        c_code.append('\t' * indentation + f'if ({gen_where[0]}) ' + '{' + f'{c_var_name} *= {gen_do[0]}' + ';}')
+                        c_code.append('\t' * indentation + f'if ({gen_where[0]}) ' + '{' + f'{c_var_name} *= {gen_do[0]}' + ';} //product')
                         for i in where_loops[starting_where_loops:]:
                             indentation -= 1
                             c_code.append('\t' * indentation + '}')
@@ -499,7 +536,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                     else:
                         attrs = cify_attrs(expr[2])[0]
                         # bonus_c_variables['___o_l'] -= 1
-                        c_code.append('\t' * indentation + f'{c_var_name} *= {attrs[0]};')
+                        c_code.append('\t' * indentation + f'{c_var_name} *= {attrs[0]}; //product')
                         for i in where_loops[starting_where_loops:]:
                             indentation -= 1
                             c_code.append('\t' * indentation + '}')
@@ -527,7 +564,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                             gen_where = cify(gen[2])
                         label_name = f'___lbl{bonus_c_variables["___lbl"]}'
                         bonus_c_variables["___lbl"] += 1
-                        c_code.append('\t' * indentation + f'if ({gen_where[0]} && {gen_do[0]}) ' + '{' + f'{c_var_name} = 1; goto {label_name};'+'}')
+                        c_code.append('\t' * indentation + f'if ({gen_where[0]} && {gen_do[0]}) ' + '{' + f'{c_var_name} = 1; goto {label_name};'+'} //any')
                         for i in where_loops[starting_where_loops:]:
                             indentation -= 1
                             c_code.append('\t' * indentation + '}')
@@ -540,7 +577,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                         # bonus_c_variables['___o_l'] -= 1
                         label_name = f'___lbl{bonus_c_variables["___lbl"]}'
                         bonus_c_variables["___lbl"] += 1
-                        c_code.append('\t' * indentation + f'if ({attrs[0]}) ' + '{' + f'{c_var_name} = 1; goto {label_name};'+'}')
+                        c_code.append('\t' * indentation + f'if ({attrs[0]}) ' + '{' + f'{c_var_name} = 1; goto {label_name};'+'} //any')
                         for i in where_loops[starting_where_loops:]:
                             indentation -= 1
                             c_code.append('\t' * indentation + '}')
@@ -569,7 +606,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                             gen_where = cify(gen[2])
                         label_name = f'___lbl{bonus_c_variables["___lbl"]}'
                         bonus_c_variables["___lbl"] += 1
-                        c_code.append('\t' * indentation + f'if ({gen_where[0]} && {gen_do[0]}) ' + '{' + f'{c_var_name} = 0; goto {label_name};' + '}')
+                        c_code.append('\t' * indentation + f'if ({gen_where[0]} && {gen_do[0]}) ' + '{' + f'{c_var_name} = 0; goto {label_name};' + '} //none')
                         for i in where_loops[starting_where_loops:]:
                             indentation -= 1
                             c_code.append('\t' * indentation + '}')
@@ -582,7 +619,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                         # bonus_c_variables['___o_l'] -= 1
                         label_name = f'___lbl{bonus_c_variables["___lbl"]}'
                         bonus_c_variables["___lbl"] += 1
-                        c_code.append('\t' * indentation + f'if ({attrs[0]}) ' + '{' + f'{c_var_name} = 0; goto {label_name};' + '}')
+                        c_code.append('\t' * indentation + f'if ({attrs[0]}) ' + '{' + f'{c_var_name} = 0; goto {label_name};' + '} //none')
                         for i in where_loops[starting_where_loops:]:
                             indentation -= 1
                             c_code.append('\t' * indentation + '}')
@@ -611,7 +648,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                             gen_where = cify(gen[2])
                         label_name = f'___lbl{bonus_c_variables["___lbl"]}'
                         bonus_c_variables["___lbl"] += 1
-                        c_code.append('\t' * indentation + f'if (!({gen_where[0]} && {gen_do[0]})) ' + '{' + f'{c_var_name} = 0; goto {label_name};' + '}')
+                        c_code.append('\t' * indentation + f'if (!({gen_where[0]} && {gen_do[0]})) ' + '{' + f'{c_var_name} = 0; goto {label_name};' + '} //all')
                         for i in where_loops[starting_where_loops:]:
                             indentation -= 1
                             c_code.append('\t' * indentation + '}')
@@ -624,7 +661,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                         # bonus_c_variables['___o_l'] -= 1
                         label_name = f'___lbl{bonus_c_variables["___lbl"]}'
                         bonus_c_variables["___lbl"] += 1
-                        c_code.append('\t' * indentation + f'if (!({attrs[0]})) ' + '{' + f'{c_var_name} = 0; goto {label_name};' + '}')
+                        c_code.append('\t' * indentation + f'if (!({attrs[0]})) ' + '{' + f'{c_var_name} = 0; goto {label_name};' + '} //all')
                         for i in where_loops[starting_where_loops:]:
                             indentation -= 1
                             c_code.append('\t' * indentation + '}')
@@ -657,7 +694,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                             label_name = f'___lbl{bonus_c_variables["___lbl"]}'
                             bonus_c_variables["___lbl"] += 1
                             #c_code.append('\t' * indentation + f'if ({key[0]}) ' + '{' + f'{c_out_name} = {attrs[0]}; goto {label_name};' + '}')
-                            c_code.append('\t' * indentation + f'if ({key[0]}) goto {label_name};')
+                            c_code.append('\t' * indentation + f'if ({key[0]}) goto {label_name}; //first')
                             for i in where_loops[starting_where_loops:]:
                                 indentation -= 1
                                 c_code.append('\t' * indentation + '}')
@@ -680,7 +717,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                             key = cify(key)
                             label_name = f'___lbl{bonus_c_variables["___lbl"]}'
                             bonus_c_variables["___lbl"] += 1
-                            c_code.append('\t' * indentation + f'if ({key[0]}) goto {label_name};')
+                            c_code.append('\t' * indentation + f'if ({key[0]}) goto {label_name}; //first')
                             for i in where_loops[starting_where_loops:]:
                                 indentation -= 1
                                 c_code.append('\t' * indentation + '}')
@@ -710,7 +747,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                             c_code.append('\t' * indentation + f'dy_set_i* {line[1].strip()} = create_set_i();')
                             gen_do = cify(gen[1])
                             gen_where = cify(gen[2])
-                        c_code.append('\t' * indentation + f'if ({gen_where[0]}) ' + '{' + f'{c_var_name} += {gen_do[0]}; {c_count_name}++' + ';}')
+                        c_code.append('\t' * indentation + f'if ({gen_where[0]}) ' + '{' + f'{c_var_name} += {gen_do[0]}; {c_count_name}++' + ';} //average')
                         for i in where_loops[starting_where_loops:]:
                             indentation -= 1
                             c_code.append('\t' * indentation + '}')
@@ -721,7 +758,7 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
                     else:
                         attrs = cify_attrs(expr[2])[0]
                         # bonus_c_variables['___o_l'] -= 1
-                        c_code.append('\t' * indentation + f'{c_var_name} += {attrs[0]}; {c_count_name}++;')
+                        c_code.append('\t' * indentation + f'{c_var_name} += {attrs[0]}; {c_count_name}++; //average')
                         for i in where_loops[starting_where_loops:]:
                             indentation -= 1
                             c_code.append('\t' * indentation + '}')
@@ -762,8 +799,16 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
             return [f'___s_p{bcv}_1', fun]
             #return [f'&___s_p{bcv}', fun]
         elif fun in functions:
+            starting_where_loops = len(where_loops)
             attrs = cify_attrs(expr[2])
+            #if len(where_loops) == starting_where_loops:
             return [f'{fun}({", ".join(i[0] for i in attrs)})', functions[fun]]
+            #else:
+            #    for i in where_loops[starting_where_loops:]:
+            #        indentation -= 1
+            #        c_code.append('\t' * indentation + '}')
+            #    where_loops = where_loops[:starting_where_loops]
+            #    return [f'{fun}({", ".join(i[0] for i in attrs)})', '{'+functions[fun]+'}']
     elif expression.startswith('with '): #inline variable
         pairs = cify_attrs(expression[5:], inline_vars = True)
         return 0
@@ -781,17 +826,30 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
             return [[f'{(a := cify(expression[:lc1[0] - 1]))[0]}', f'{(b := cify(expression[lc1[0]:]))[0]}'], [a[1], b[1]]]
     elif lc1 := find_last_char(expression, {' as '}): #with as pair inline variable
         if ' in ' in expression[lc1[0]:]:
+            starting_where_loops = len(where_loops)
             var_name = expression[lc1[0]:][3:expression[lc1[0]:].index(' in ')].strip()
             variables[var_name] = expression[lc1[0]:][expression[lc1[0]:].index(' in ')+4:].strip()
             #print(variables)
             #c_code.append('\t'*indentation + f'{datatype_to_c}')
             in_as.append(var_name)
+            #for i in where_loops[starting_where_loops:]:
+            #    indentation -= 1
+            #    c_code.append('\t' * indentation + '}')
+            #where_loops = where_loops[:starting_where_loops]
+            where_loops = where_loops[:starting_where_loops] + ['' for i in where_loops[starting_where_loops:]]
             return [[f'{(b := cify(expression[:lc1[0]], direct_in_as=True))[0]}', var_name], [b[1]]]
         else:
+            starting_where_loops = len(where_loops)
             var_name = expression[lc1[0]+3:].strip()
             b = cify(expression[:lc1[0]], direct_in_as=True)
             variables[var_name] = b[1]
             #print(variables)
+            in_as.append(var_name)
+            #for i in where_loops[starting_where_loops:]:
+            #    indentation -= 1
+            #    c_code.append('\t' * indentation + '}')
+            #where_loops = where_loops[:starting_where_loops]
+            where_loops = where_loops[:starting_where_loops] + ['' for i in where_loops[starting_where_loops:]]
             return [[f'{(b)[0]}', var_name], [b[1]]]
     elif lc1 := find_last_char(expression, {' in '}): #of type
         return [expression[:lc1[0]].strip(), expression[lc1[0]+3:].strip()]
@@ -833,10 +891,23 @@ def cify(expression, only_second_parts=False, direct_in_as=False):
             return [f'{container[0]}->{element}', structs[container[1]][element]]
     elif expr := re.match(r'^\s*\((.*)\)\s*$', expression):  #unneccessary parentheses
         return cify(expr[1])
-    print(f'Error when compiling expression at line {h0}:')
-    print(commented_code[h0])
-    print(' '*h.index(expression) + '^'*len(expression.strip()))
+    print(f'Error when compiling expression at line {h0+1}:')
+    print(code[h0])
+    #if expression in h:
+    #    print(' '*h.index(expression) + '^'*len(expression.strip()))
+    print(f'Error in expression: {expression}')
     exit(1)
+
+code = []
+last_true_line = 0
+inside_start = 0
+running = ''
+for i0, i in enumerate(no_comment_code):
+    inside_start = in_paranth(i, inside_start)
+    running += i + ' '
+    if not inside_start:
+        code.append(running[:-1])
+        running = ''
 
 for h0, h in enumerate(code):
     for i in malloc_needs_free:
@@ -851,7 +922,7 @@ for h0, h in enumerate(code):
         if (cified_line := cify(line[2]))[1] == 'Z':
             if where_loops:
                 c_code.insert(bef_loop, '\t' * indentation + f'dy_set_i* ___p_s{bonus_c_variables["___p_s"]} = create_set_i();')
-                c_code.append('\t' * indentation + f'append_i(___p_s{bonus_c_variables["___p_s"]}, {cified_line[0]});')
+                c_code.append('\t' * indentation + f'append_i(___p_s{bonus_c_variables["___p_s"]}, {cified_line[0]}); //print')
                 for i in where_loops:
                     indentation -= 1
                     c_code.append('\t' * indentation + '}')
@@ -864,7 +935,7 @@ for h0, h in enumerate(code):
         elif cified_line[1] == 'R':
             if where_loops:
                 c_code.insert(bef_loop, '\t' * indentation + f'dy_set_i* ___p_s{bonus_c_variables["___p_s"]} = create_set_f();')
-                c_code.append('\t' * indentation + f'append_f(___p_s{bonus_c_variables["___p_s"]}, {cified_line[0]});')
+                c_code.append('\t' * indentation + f'append_f(___p_s{bonus_c_variables["___p_s"]}, {cified_line[0]}); //print')
                 for i in where_loops:
                     indentation -= 1
                     c_code.append('\t' * indentation + '}')
@@ -1015,7 +1086,7 @@ for h0, h in enumerate(code):
     elif line := re.match(r'^\s*$', h): #nothing
         pass
     else:
-        print(f'Error when compiling line {h0}:')
+        print(f'Error when compiling line {h0+1}:')
         print(h)
         exit(1)
 
@@ -1024,7 +1095,8 @@ for i in where_loops:
     c_code.append('\t' * indentation + '}')
 where_loops = []
 
-print('''#include <stdio.h>
+print('''//Compiled by Uberort v1.0.1
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <time.h>

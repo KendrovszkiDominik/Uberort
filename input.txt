@@ -48,9 +48,6 @@ sib in Z = {1, 9, 40}
 print sia + sib
 #>>> {2, 10, 41, 4, 12, 43, 6, 14, 45, 18, 49}
 #When adding sia and sib together you added each pair of possible values together resulting in even more possible states
-print sin(sia)
-#>>> {0.841471, 0.141120, -0.958924, 0.412118}
-#When calling a function on a superposition, it will be called for every possible value / pair of values etc.
 
 ##########################################################
 #       Differences between superpositions and sets      #
@@ -65,6 +62,10 @@ print sia + sin(sia)
 #>>> {1.841471, 3.141120, 4.041076, 9.412118}
 #If sia was just a set, then sin would return another set and we would get many unwanted values when calculating the cartesian sum
 #But superpositions are smarter than that and it will print out only 1 value for each state of sia
+#If you do want to consider some references to sia as different superpositions then you can do this:
+print sia + sin(sia) + sia2 ** 2 + cos(sia2) with sia as sia2
+#>>> {3.381773, 4.681422, 5.581378, 10.952421, 9.851478, 11.151128, 12.051083, 17.422126, 27.125133, 28.424782, 29.324738, 34.695781, 81.930341, 83.229990, 84.129945, 89.500988}
+#Here, the 2 references to sia, and the 2 references to sia2 will be considered as the same, but the references to sia and sia2 won't
 
 ##########################################################
 #    Filtering, comprehensions and built-in functions    #
@@ -81,6 +82,7 @@ print a*b // max(r1 where a !% r1 && b !% r1) #The second half gets the biggest 
 
 #Here is a simple superposition comprehension
 print {r1 where a !% r1 && b !% r1}
+#>>> {1, 5}
 
 #And this finds all the primes from 2 to 51
 r2 in Z = mrange(50)+1
@@ -95,7 +97,7 @@ print {ri where ri !% 3 && ri % 7 with range(60) as ri}
 
 #If you want to make the inline variable definition contain self-referencing, you'll need to declare its type to let the compiler know it even before it's used
 #In this example we generate all the primes from 2 to 51 in a single line
-print (rec_inline with {range_inline where none(range_inline !% rec_inline) with mrange(50)+1 as range_inline} as rec_inline in {Z})
+print rec_inline with {range_inline where none(range_inline !% rec_inline) with mrange(50)+1 as range_inline} as rec_inline in {Z}
 #>>> {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47}
 
 #All the built-in functions in version 1.0 are:
@@ -155,7 +157,7 @@ print square(sia)
 
 #Though it may seem limiting that all functions are one-liners, there is nothing you can't to using a single line in Uberort
 #Here is an overcomplicated and very inefficient function that calculates the number of divisors of a number to showcase how you can link together different features
-def number_of_divisors(x in Z) => product(first(expon in N: x % all_primes**expon) where 1 with {r2 where none(r2 !% all_primes) with mrange(x)+1 as r2} as all_primes in {Z}) in Z
+def number_of_divisors(x in Z) => product(first(expon in N: x % all_primes**expon) where 1 with {r3 where none(r3 !% all_primes) with mrange(x)+1 as r3} as all_primes in {Z}) in Z
 print number_of_divisors(840)
 #>>> 32
 print first(i in N: number_of_divisors(i) > 32)
@@ -194,4 +196,5 @@ print average(ran_vecs.x**2 + ran_vecs.y**2 < 1) * 4
 #After finishing Uberort I may start working on Uberort Sharp, the object-oriented variant of Uberort
 #Planned features for Uberort Sharp includes classes, inheritance, error-handling, polymorphism and dynamic variables
 #But for now I'm rather focusing on designing this language to reach its potentials
+
 
