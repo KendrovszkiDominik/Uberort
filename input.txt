@@ -13,6 +13,8 @@
 #The variables are just like in other languages with Z standing for int64s and R standing for doubles
 ia in Z = 4
 fb in R = 7.0
+#Or you can just use type inference
+ti_a := 6.75
 
 #The arithmetic is also what you'd expect from a langauge
 print ia + fb
@@ -44,9 +46,9 @@ print ia + fb
 
 #sia will now hold the values 1, 3, 5 and 9 all at once
 sia in Z = {1, 3, 5, 9}
-sib in Z = {1, 9, 40}
+sib := {1, 9, 40}
 print sia + sib
-#>>> {2, 10, 41, 4, 12, 43, 6, 14, 45, 18, 49}
+#>>> {2, 10, 41, 4, 12, 43, 6, 14, 45, 10, 18, 49}
 #When adding sia and sib together you added each pair of possible values together resulting in even more possible states
 
 ##########################################################
@@ -74,9 +76,9 @@ print sia + sin(sia) + sia2 ** 2 + cos(sia2) with sia as sia2
 #You can filter with 'where'; put the 'where' between curly braces to make it a superposition comprehension
 
 #Let's start with a simple smallest common multiple
-a in Z = 10
-b in Z = 15
-r1 in Z = mrange(smaller(a, b)) #Store all the values from 1 to the smaller of a and b
+a := 10
+b := 15
+r1 := mrange(smaller(a, b)) #Store all the values from 1 to the smaller of a and b
 print a*b // max(r1 where a !% r1 && b !% r1) #The second half gets the biggest number of r1 that's both a divisor of a and b
 #>>> 30
 
@@ -85,11 +87,12 @@ print {r1 where a !% r1 && b !% r1}
 #>>> {1, 5}
 
 #And this finds all the primes from 2 to 51
-r2 in Z = mrange(50)+1
+r2 := mrange(50)+1
 #Superposition comprehensions can contain self-referencing, just like this
 primes in Z = {r2 where none(r2 !% primes)}
 print primes
 #>>> {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47}
+#Just keep in mind not to use type inference for self-referencing variables
 
 #You can also circumvent having to write another line for a variable definition by using a with and then creating the variables using the keyword as
 print {ri where ri !% 3 && ri % 7 with range(60) as ri}
@@ -100,7 +103,7 @@ print {ri where ri !% 3 && ri % 7 with range(60) as ri}
 print rec_inline with {range_inline where none(range_inline !% rec_inline) with mrange(50)+1 as range_inline} as rec_inline in {Z}
 #>>> {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47}
 
-#All the built-in functions in version 1.0 are:
+#All the built-in functions in the current version are:
 #Functions for simple numbers:
 #   -sqrt(a) - calculates the square root of the number
 #   -greater(a, b) - results in the greater number
@@ -127,6 +130,8 @@ print rec_inline with {range_inline where none(range_inline !% rec_inline) with 
 #   -len(a) - gets the length of a
 #Functions for sequences:
 #   -first(a: b) - finds the first element of sequence a where b is true
+#Other:
+#   -time() - returns a float of the current time where 1 difference means a second
 
 ##########################################################
 #                        Sequences                       #
@@ -143,21 +148,26 @@ print fibs[5]
 print first(fibs: fibs > 9000)
 #>>> 10946
 
+#You can use type inference in sequences too, but don't use it on recursive ones
+
 ##########################################################
 #                        Functions                       #
 ##########################################################
 #Functions in this langauge are all one-liners
 
-def square(x in R) => x**2 in R
+def square(x in R) in R => x**2
 print square(7.3)
 #>>> 53.290000
 #Mapping has never been easier
 print square(sia)
 #>>> {1.000000, 9.000000, 25.000000, 81.000000}
 
+#You can leave out the 'in R' part in the square function to use type inference, but again, you can't use type inference in case of recursion:
+def ff(x) in Z => x < 2 ? 1 : ff(x-1) + ff(x-2)
+
 #Though it may seem limiting that all functions are one-liners, there is nothing you can't to using a single line in Uberort
 #Here is an overcomplicated and very inefficient function that calculates the number of divisors of a number to showcase how you can link together different features
-def number_of_divisors(x in Z) => product(first(expon in N: x % all_primes**expon) where 1 with {r3 where none(r3 !% all_primes) with mrange(x)+1 as r3} as all_primes in {Z}) in Z
+def number_of_divisors(x in Z) => product(first(expon in N: x % all_primes**expon) where 1 with {r3 where none(r3 !% all_primes) with mrange(x)+1 as r3} as all_primes in {Z})
 print number_of_divisors(840)
 #>>> 32
 print first(i in N: number_of_divisors(i) > 32)
@@ -169,25 +179,28 @@ print first(i in N: number_of_divisors(i) > 32)
 #You can make simple structs to work with complex data types
 
 struct Vec2 = [x in R, y in R]
-def magnitude(v in Vec2) => sqrt(v.x**2 + v.y**2) in R
+def magnitude(v in Vec2) => sqrt(v.x**2 + v.y**2)
 print magnitude(Vec2(x:8, y:15))
 #>>> 17.000000
 struct ComplexContainer = [v in Vec2, d in Z, f in R]
-cc in ComplexContainer = ComplexContainer(v: Vec2(x:17, y:4), d: 5, f: -17.4)
+cc := ComplexContainer(v: Vec2(x:17, y:4), d: 5, f: -17.4)
 print cc
 #>>> ComplexContainer(v: Vec2(x: 17.000000, y: 4.000000), d: 5, f: -17.400000)
-asd[i] in Vec2 = Vec2(x:2*i, y:i**2)
+asd[i] := Vec2(x:2*i, y:i**2)
 print first(asd: magnitude(asd) > 30)
 #>>> Vec2(x: 12.000000, y: 36.000000)
+def to_vec(x in Z) => Vec2(x:x, y:x)
+print to_vec(8)
+#>>> Vec2(x: 8.000000, y: 8.000000)
 
 ##########################################################
 #                      Randomization                     #
 ##########################################################
 print random(-1, 1, 5)
 #>>> {-0.959323, 0.398504, 0.474822, -0.198824, 0.988114}
-ran_vecs in Vec2 = Vec2(x:random(-1, 1, 50), y:random(-1, 1, 50))
+ran_vecs := Vec2(x:random(-1, 1, 5000), y:random(-1, 1, 500))
 print average(ran_vecs.x**2 + ran_vecs.y**2 < 1) * 4
-#>>> 3.150400
+#>>> 3.141662
 
 ##########################################################
 #                    Future of Uberort                   #
@@ -196,5 +209,3 @@ print average(ran_vecs.x**2 + ran_vecs.y**2 < 1) * 4
 #After finishing Uberort I may start working on Uberort Sharp, the object-oriented variant of Uberort
 #Planned features for Uberort Sharp includes classes, inheritance, error-handling, polymorphism and dynamic variables
 #But for now I'm rather focusing on designing this language to reach its potentials
-
-

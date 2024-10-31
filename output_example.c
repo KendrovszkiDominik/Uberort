@@ -1,415 +1,153 @@
-//Compiled by Uberort v1.0.1
+//Compiled by Uberort v1.1.0
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
 #include <math.h>
 #include <string.h>
+#include <sys/time.h>
 
-#define INITIAL_CAPACITY 16
-#define US_SIZE 262144
-
-int cur_set_i_ind = 0;
-
-struct Cache;
-
-union Quant{
+typedef union {
     int64_t i;
     double f;
-    struct Cache* c;
     void* s;
-};
+} Quant;
 
 typedef struct {
-    uint8_t allocated; // 0-not allocated, 1-allocated, 2-freed up
-    union Quant element;
-    uint16_t rev_ind; // index in the dy_set_i
-    uint8_t is_ptr; // 0-not pointer, 1-void, 2-cache
-} si_e;
+    Quant* elements;
+    int32_t size;
+    int32_t cur_size;
+} list;
 
-si_e universal_set[US_SIZE]; // 18-bit hash array containing integers
-
-// 18-bit hash for integers
-uint hash_int(int a, int sp_index) {
-    return (a*3 + ((a%63) << 3) + (sp_index*10397)) % US_SIZE;
-}
-
-uint64_t float_to_int_bits(double f) {
-    union {
-        double f;
-        uint64_t i;
-    } u;
-    u.f = f;
-    return u.i & ((1<<16)-1);
-}
-
-// 18-bit hash for floats
-uint hash_float(double f, int sp_index) {
-    uint64_t a = float_to_int_bits(f);
-    return (a*3 + ((a%63) << 3) + (sp_index*10397)) % US_SIZE;
-}
-
-// 18-bit hash for structs
-uint hash_struct(int64_t* f, int sp_index, int size) {
-    int outp = 0;
-    for (int i = 0; i<size/8; i++) {
-        int64_t a = f[i] & ((1<<16)-1);
-        outp += (a*3 + ((a%63) << 3) + (sp_index*10397)) % US_SIZE;
-        outp = outp*3 + ((outp%63) << 3);
-    }
-    return outp % US_SIZE;
-}
-
-typedef struct {
-    int* elements;   // array to hold element indices
-    int size;        // number of elements in the set
-    int capacity;    // current allocated capacity
-    int ind;         // index of the set (for better hash) 
-} dy_set_i;
-
-dy_set_i* create_set_i() {
-    dy_set_i *self = malloc(sizeof(dy_set_i));
-    self->elements = malloc(INITIAL_CAPACITY * sizeof(int64_t));
-    self->size = 0;
-    self->capacity = INITIAL_CAPACITY;
-    self->ind = cur_set_i_ind++;
-    return self;
-}
-
-typedef struct Cache {
-    union Quant key;
-    union Quant element;
-} Cache;
-
-int is_cached_i(int item, int ind) {
-    for (int i = hash_int(item, ind); 1; i++) {
-        if (universal_set[i%US_SIZE].allocated == 0) { // not in universal set at all
-            return 0;
-        } else if (universal_set[i%US_SIZE].allocated == 1 &&
-        universal_set[i%US_SIZE].rev_ind == 65535) {
-            if (universal_set[i%US_SIZE].element.c->key.i == item) { // no false matches
-                return 1;
-            }
-        }
-    }
-}
-
-int64_t get_cache_i(int item, int ind) {
-    for (int i = hash_int(item, ind); 1; i++) {
-        if (universal_set[i%US_SIZE].allocated == 1 &&
-        universal_set[i%US_SIZE].rev_ind == 65535) {
-            if (universal_set[i%US_SIZE].element.c->key.i == item) { // no false matches
-                return universal_set[i%US_SIZE].element.c->element.i;
-            }
-        }
-    }
-}
-
-int64_t cache_i(int item, int value, int ind) {
-    for (int i = hash_int(item, ind); 1; i++) {
-        if (universal_set[i%US_SIZE].allocated != 1) { // not allocated or freed up
-            universal_set[i%US_SIZE].element.c = malloc(sizeof(struct Cache));
-            universal_set[i%US_SIZE].element.c->key.i = item;
-            universal_set[i%US_SIZE].element.c->element.i = value;
-            universal_set[i%US_SIZE].rev_ind = -1;
-            universal_set[i%US_SIZE].allocated = 1;
-            return value;
-        }
-    }
-}
-
-double get_cache_f(int item, int ind) {
-    for (int i = hash_int(item, ind); 1; i++) {
-        if (universal_set[i%US_SIZE].allocated == 1 &&
-        universal_set[i%US_SIZE].rev_ind == 65535) {
-            if (universal_set[i%US_SIZE].element.c->key.i == item) { // no false matches
-                return universal_set[i%US_SIZE].element.c->element.f;
-            }
-        }
-    }
-}
-
-double cache_f(int item, double value, int ind) {
-    for (int i = hash_int(item, ind); 1; i++) {
-        if (universal_set[i%US_SIZE].allocated != 1) { // not allocated or freed up
-            universal_set[i%US_SIZE].element.c = malloc(sizeof(struct Cache));
-            universal_set[i%US_SIZE].element.c->key.i = item;
-            universal_set[i%US_SIZE].element.c->element.f = value;
-            universal_set[i%US_SIZE].rev_ind = -1;
-            universal_set[i%US_SIZE].allocated = 1;
-            return value;
-        }
-    }
-}
-
-void* get_cache_s(int item, int ind, int size) {
-    for (int i = hash_int(item, ind); 1; i++) {
-        if (universal_set[i%US_SIZE].allocated == 1 &&
-            universal_set[i%US_SIZE].rev_ind == 65535 &&
-            universal_set[i%US_SIZE].is_ptr == 2) {
-            if (universal_set[i%US_SIZE].element.c->key.i == item) { // no false matches
-                return universal_set[i%US_SIZE].element.c->element.s;
-            }
-        }
-    }
-}
-
-void* cache_s(int item, void* value, int ind, int size) {
-    for (int i = hash_int(item, ind); 1; i++) {
-        if (universal_set[i%US_SIZE].allocated != 1) { // not allocated or freed up
-            universal_set[i%US_SIZE].element.c = malloc(sizeof(struct Cache));
-            universal_set[i%US_SIZE].element.c->element.s = malloc(size);
-            if (universal_set[i%US_SIZE].element.s == NULL) {
-                fprintf(stderr, "Error: Memory allocation failed\n");
-                exit(1);
-            }
-            memcpy(universal_set[i%US_SIZE].element.c->element.s, value, size);
-            universal_set[i%US_SIZE].element.c->key.i = item;
-            universal_set[i%US_SIZE].rev_ind = -1;
-            universal_set[i%US_SIZE].allocated = 1;
-            universal_set[i%US_SIZE].is_ptr = 2;
-            return value;
-        }
-    }
-}
-
-int contains_i(dy_set_i* self, int item) {
-    for (int i = hash_int(item, self->ind); 1; i++) {
-        if (universal_set[i%US_SIZE].allocated == 0) { // not in universal set at all
-            return 0;
-        } else if (universal_set[i%US_SIZE].allocated == 1) {
-            if (universal_set[i%US_SIZE].element.i == item) { // no false matches
-                return 1;
-            }
-        }
-    }
-}
-
-void append_i(dy_set_i* self, int item) {
-    if (!contains_i(self, item)) {
-        for (int i = hash_int(item, self->ind); 1; i++) {
-            if (universal_set[i%US_SIZE].allocated != 1) { // not allocated or freed up
-                universal_set[i%US_SIZE].element.i = item;
-                universal_set[i%US_SIZE].allocated = 1;
-                universal_set[i%US_SIZE].rev_ind = self->size;
-                universal_set[i%US_SIZE].is_ptr = 0;
-                if (self->size == self->capacity) {
-                    self->capacity *= 2;
-                    self->elements = realloc(self->elements, self->capacity * sizeof(int64_t));
-                    if (self->elements == NULL) {
-                        fprintf(stderr, "Error: Memory allocation failed\n");
-                        exit(1);
-                    }
-                }
-                self->elements[self->size] = i%US_SIZE;
-                self->size += 1;
-                return;
-            }
-        }
-    }
-}
-
-void remove_i(dy_set_i* self, int item) {
-    for (int i = hash_int(item, self->ind); 1; i++) {
-        if (universal_set[i%US_SIZE].allocated == 0) { // already not in set
-            return;
-        } else if (universal_set[i%US_SIZE].allocated == 1) {
-            if (universal_set[i%US_SIZE].element.i == item) { // no false matches
-                universal_set[i%US_SIZE].allocated = 2;
-                self->size -= 1;
-                self->elements[universal_set[i%US_SIZE].rev_ind] =
-                        self->elements[self->size];
-                universal_set[self->elements[self->size]].rev_ind = 
-                        universal_set[i%US_SIZE].rev_ind;
-                return;
-            }
-        }
-    }
-}
-
-void print_set_i(dy_set_i* self) {
-    printf("{");
-    for (int i = 0; i < self->size; i++) {
-        printf("%d", universal_set[self->elements[i]].element.i);
-        if (i != self->size-1) {
-            printf(", ");
-        }
-    }
-    printf("}\n");
-}
-
-void array_to_set_i(dy_set_i* self, int64_t* arr, int size) {
-    for (int i = 0; i < size; i++) {
-        append_i(self, arr[i]);
-    }
-}
-
-dy_set_i* add_set_i(dy_set_i* self, dy_set_i* other) {
-    dy_set_i* outp = create_set_i();
-    for (int i = 0; i < self->size; i++) {
-        for (int j = 0; j < other->size; j++) {
-            append_i(outp, universal_set[self->elements[i]].element.i +
-                    universal_set[other->elements[j]].element.i);
-        }
-    }
+list* make_list() {
+    list* outp = malloc(sizeof(list));
+    outp->size = 16;
+    outp->cur_size = 0;
+    outp->elements = malloc(sizeof(Quant)*16);
     return outp;
 }
 
-void clear_set_i(dy_set_i* self) {
-    for (;self->size;) {
-        remove_i(self, universal_set[self->elements[0]].element.i);
+void destroy_list(list* self) {
+    free(self->elements);
+    free(self);
+}
+
+void append(list* self, Quant n) {
+    if (self->size == self->cur_size) {
+        self->elements = realloc(self->elements, sizeof(Quant)*self->size*2);
+        self->size *= 2;
     }
+    self->elements[self->cur_size++] = n;
 }
 
-dy_set_i* create_set_f() {
-    dy_set_i *self = malloc(sizeof(dy_set_i));
-    self->elements = malloc(INITIAL_CAPACITY * sizeof(double));
-    self->size = 0;
-    self->capacity = INITIAL_CAPACITY;
-    self->ind = cur_set_i_ind++;
-    return self;
+list* array_to_list(Quant* arr, int32_t size) {
+    list* outp = malloc(sizeof(list));
+    outp->size = size;
+    outp->cur_size = size;
+    outp->elements = malloc(sizeof(Quant)*size);
+    memcpy(outp->elements, arr, sizeof(Quant)*size);
+    return outp;
 }
 
-int contains_f(dy_set_i* self, double item) {
-    for (int i = hash_float(item, self->ind); 1; i++) {
-        if (universal_set[i%US_SIZE].allocated == 0) { // not in universal set at all
-            return 0;
-        } else if (universal_set[i%US_SIZE].allocated == 1) {
-            if (universal_set[i%US_SIZE].element.f == item) { // no false matches
-                return 1;
-            }
+Quant getitem(list* self, int32_t n) {
+    return self->elements[n];
+}
+
+typedef struct {
+    Quant key;
+    Quant value;
+    int32_t next; // index of next pair in case of collision
+} KeyValuePair;
+
+typedef struct {
+    KeyValuePair* pairs;
+    int32_t* table;
+    int32_t size;
+    int32_t cur_size;
+    int32_t pair_count;
+} dict;
+
+uint32_t hash_int(Quant a) {
+    return a.i*3 + ((a.i%63) << 3);
+}
+
+dict* make_dict() {
+    dict* outp = malloc(sizeof(dict));
+    outp->size = 16;
+    outp->cur_size = 0;
+    outp->pair_count = 0;
+    outp->pairs = malloc(sizeof(KeyValuePair) * outp->size);
+    outp->table = malloc(sizeof(int32_t) * outp->size);
+    for (int i = 0; i < outp->size; i++) outp->table[i] = -1;
+    return outp;
+}
+
+void destroy_dict(dict* self) {
+    free(self->pairs);
+    free(self->table);
+    free(self);
+}
+
+void resize_and_rehash(dict* self) {
+    int32_t old_size = self->size;
+    self->size *= 4;
+    self->pairs = realloc(self->pairs, sizeof(KeyValuePair) * self->size);
+    int32_t* new_table = malloc(sizeof(int32_t) * self->size);
+    for (int i = 0; i < self->size; i++) new_table[i] = -1;
+    for (int i = 0; i < self->pair_count; i++) {
+        uint32_t hash = hash_int(self->pairs[i].key) % self->size;
+        self->pairs[i].next = new_table[hash];
+        new_table[hash] = i;
+    }
+    free(self->table);
+    self->table = new_table;
+}
+
+
+Quant dict_set(dict* self, Quant key, Quant value) {
+    uint32_t hash = hash_int(key) % self->size;
+    int32_t pair_index = self->table[hash];
+    while (pair_index != -1) {
+        if (memcmp(&self->pairs[pair_index].key, &key, sizeof(Quant)) == 0) {
+            self->pairs[pair_index].value = value;
+            return value;
         }
+        pair_index = self->pairs[pair_index].next;
     }
+    if (self->pair_count >= self->size*0.6) resize_and_rehash(self);
+    self->pairs[self->pair_count].key = key;
+    self->pairs[self->pair_count].value = value;
+    self->pairs[self->pair_count].next = self->table[hash];
+    self->table[hash] = self->pair_count;
+    self->pair_count++;
+    self->cur_size++;
+    return value;
 }
 
-void append_f(dy_set_i* self, double item) {
-    if (!contains_f(self, item)) {
-        for (int i = hash_float(item, self->ind); 1; i++) {
-            if (universal_set[i%US_SIZE].allocated != 1) { // not allocated or freed up
-                universal_set[i%US_SIZE].element.f = item;
-                universal_set[i%US_SIZE].allocated = 1;
-                universal_set[i%US_SIZE].rev_ind = self->size;
-                universal_set[i%US_SIZE].is_ptr = 0;
-                if (self->size == self->capacity) {
-                    self->capacity *= 2;
-                    self->elements = realloc(self->elements, self->capacity * sizeof(double));
-                    if (self->elements == NULL) {
-                        fprintf(stderr, "Error: Memory allocation failed\n");
-                        exit(1);
-                    }
-                }
-                self->elements[self->size] = i%US_SIZE;
-                self->size += 1;
-                return;
-            }
+Quant dict_get(dict* self, Quant key) {
+    uint32_t hash = hash_int(key) % self->size;
+    int32_t pair_index = self->table[hash];
+    while (pair_index != -1) {
+        if (memcmp(&self->pairs[pair_index].key, &key, sizeof(Quant)) == 0) {
+            return self->pairs[pair_index].value;
         }
+        pair_index = self->pairs[pair_index].next;
     }
+    printf("Error: dictionary key doesn't exist");
+    exit(1);
 }
 
-void remove_f(dy_set_i* self, double item) {
-    for (int i = hash_float(item, self->ind); 1; i++) {
-        if (universal_set[i%US_SIZE].allocated == 0) { // already not in set
-            return;
-        } else if (universal_set[i%US_SIZE].allocated == 1) {
-            if (universal_set[i%US_SIZE].element.f == item) { // no false matches
-                universal_set[i%US_SIZE].allocated = 2;
-                self->size -= 1;
-                self->elements[universal_set[i%US_SIZE].rev_ind] =
-                        self->elements[self->size];
-                universal_set[self->elements[self->size]].rev_ind = 
-                        universal_set[i%US_SIZE].rev_ind;
-                return;
-            }
+
+int dict_has(dict* self, Quant key) {
+    uint32_t hash = hash_int(key) % self->size;
+    int32_t pair_index = self->table[hash];
+    while (pair_index != -1) {
+        if (memcmp(&self->pairs[pair_index].key, &key, sizeof(Quant)) == 0) {
+            return 1;
         }
+        pair_index = self->pairs[pair_index].next;
     }
-}
-
-void print_set_f(dy_set_i* self) {
-    printf("{");
-    for (int i = 0; i < self->size; i++) {
-        printf("%f", universal_set[self->elements[i]].element.f);
-        if (i != self->size-1) {
-            printf(", ");
-        }
-    }
-    printf("}\n");
-}
-
-void array_to_set_f(dy_set_i* self, double* arr, int size) {
-    for (int i = 0; i < size; i++) {
-        append_f(self, arr[i]);
-    }
-}
-
-void clear_set_f(dy_set_i* self) {
-    for (;self->size;) {
-        remove_f(self, universal_set[self->elements[0]].element.f);
-    }
-}
-
-int contains_s(dy_set_i* self, void* item, int size) {
-    for (int i = hash_struct(item, self->ind, size); 1; i++) {
-        if (universal_set[i%US_SIZE].allocated == 0) { // not in universal set at all
-            return 0;
-        } else if (universal_set[i%US_SIZE].allocated == 1 && universal_set[i%US_SIZE].is_ptr == 1) {
-            if (!memcmp(universal_set[i%US_SIZE].element.s, item, size)) { // no false matches
-                return 1;
-            }
-        }
-    }
-}
-
-void append_s(dy_set_i* self, void* item, int size) {
-    if (!contains_s(self, item, size)) {
-        for (int i = hash_struct(item, self->ind, size); 1; i++) {
-            if (universal_set[i%US_SIZE].allocated != 1) { // not allocated or freed up
-                universal_set[i%US_SIZE].element.s = malloc(size);
-                if (universal_set[i%US_SIZE].element.s == NULL) {
-                    fprintf(stderr, "Error: Memory allocation failed\n");
-                    exit(1);
-                }
-                memcpy(universal_set[i%US_SIZE].element.s, item, size);
-                universal_set[i%US_SIZE].allocated = 1;
-                universal_set[i%US_SIZE].rev_ind = self->size;
-                universal_set[i%US_SIZE].is_ptr = 1;
-                if (self->size == self->capacity) {
-                    self->capacity *= 2;
-                    self->elements = realloc(self->elements, self->capacity * sizeof(double));
-                    if (self->elements == NULL) {
-                        fprintf(stderr, "Error: Memory allocation failed\n");
-                        exit(1);
-                    }
-                }
-                self->elements[self->size] = i%US_SIZE;
-                self->size += 1;
-                return;
-            }
-        }
-    }
-}
-
-void remove_s(dy_set_i* self, void* item, int size) {
-    for (int i = hash_struct(item, self->ind, size); 1; i++) {
-        if (universal_set[i%US_SIZE].allocated == 0) { // already not in set
-            return;
-        } else if (universal_set[i%US_SIZE].allocated == 1) {
-            if (!memcmp(universal_set[i%US_SIZE].element.s, item, size)) { // no false matches
-                universal_set[i%US_SIZE].allocated = 2;
-                self->size -= 1;
-                self->elements[universal_set[i%US_SIZE].rev_ind] =
-                        self->elements[self->size];
-                universal_set[self->elements[self->size]].rev_ind = 
-                        universal_set[i%US_SIZE].rev_ind;
-                return;
-            }
-        }
-    }
-}
-
-void clear_set_s(dy_set_i* self, int size) {
-    for (;self->size;) {
-        remove_s(self, universal_set[self->elements[0]].element.s, size);
-    }
+    return 0;
 }
 
 double gauss_pd(double x) {
@@ -428,6 +166,12 @@ double gauss_random() {
     return z0;
 }
 
+double current_time() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec + tv.tv_usec / 1000000.0;
+}
+
 double gauss_cd(double x) {
     return 0.5 * (1 + erf(x / sqrt(2)));
 }
@@ -437,147 +181,202 @@ int main() {
 	srand ( time(NULL) );
 	int64_t ia = 4;
 	double fb = 7.0;
+	double ti_a = 6.75;
 	printf("%f\n", (ia + fb));
-	dy_set_i* sia = create_set_i();
-	int64_t ___b_a0[4] = {1, 3, 5, 9};
-	array_to_set_i(sia, ___b_a0, 4);
-	dy_set_i* sib = create_set_i();
-	int64_t ___b_a1[3] = {1, 9, 40};
-	array_to_set_i(sib, ___b_a1, 3);
-			dy_set_i* ___p_s0 = create_set_i();
-	for (int sia___l1 = 0; sia___l1 < sia->size; sia___l1++) {
-		int64_t sia___l2 = universal_set[sia->elements[sia___l1]].element.i;
-		for (int sib___l1 = 0; sib___l1 < sib->size; sib___l1++) {
-			int64_t sib___l2 = universal_set[sib->elements[sib___l1]].element.i;
-			append_i(___p_s0, (sia___l2 + sib___l2)); //print
+	Quant ___b_a0[4] = {{.i=1}, {.i=3}, {.i=5}, {.i=9}};
+	list* sia = array_to_list(___b_a0, 4);
+	Quant ___b_a1[3] = {{.i=1}, {.i=9}, {.i=40}};
+	list* sib = array_to_list(___b_a1, 3);
+			list* ___p_s0 = make_list();
+	for (int sia___l1 = 0; sia___l1 < sia->cur_size; sia___l1++) {
+		int64_t sia___l2 = getitem(sia, sia___l1).i;
+		for (int sib___l1 = 0; sib___l1 < sib->cur_size; sib___l1++) {
+			int64_t sib___l2 = getitem(sib, sib___l1).i;
+			Quant ___q_p0 = {.i=(sia___l2 + sib___l2)};
+			append(___p_s0, ___q_p0); //print
 		}
 	}
-	print_set_i(___p_s0);
-	clear_set_i(___p_s0);
-		dy_set_i* ___p_s1 = create_set_i();
-	for (int sia___l1 = 0; sia___l1 < sia->size; sia___l1++) {
-		int64_t sia___l2 = universal_set[sia->elements[sia___l1]].element.i;
-		append_i(___p_s1, (sia___l2 + sia___l2)); //print
+	printf("{");
+	for (int ___p_s0_1 = 0; ___p_s0_1 < ___p_s0->cur_size; ___p_s0_1++) {
+		printf("%d", getitem(___p_s0, ___p_s0_1).i);
+		if (___p_s0_1 != ___p_s0->cur_size-1) printf(", ");
 	}
-	print_set_i(___p_s1);
-	clear_set_i(___p_s1);
-		dy_set_i* ___p_s2 = create_set_f();
-	for (int sia___l1 = 0; sia___l1 < sia->size; sia___l1++) {
-		int64_t sia___l2 = universal_set[sia->elements[sia___l1]].element.i;
-		append_f(___p_s2, (sia___l2 + sin(sia___l2))); //print
+	printf("}\n");
+	destroy_list(___p_s0);
+		list* ___p_s1 = make_list();
+	for (int sia___l1 = 0; sia___l1 < sia->cur_size; sia___l1++) {
+		int64_t sia___l2 = getitem(sia, sia___l1).i;
+		Quant ___q_p1 = {.i=(sia___l2 + sia___l2)};
+		append(___p_s1, ___q_p1); //print
 	}
-	print_set_f(___p_s2);
-	clear_set_f(___p_s2);
-			dy_set_i* ___p_s3 = create_set_f();
-		int64_t sia2;
-	for (int sia___l1 = 0; sia___l1 < sia->size; sia___l1++) {
-		int64_t sia___l2 = universal_set[sia->elements[sia___l1]].element.i;
-		sia2 = sia___l2;
-		for (int sia___l1 = 0; sia___l1 < sia->size; sia___l1++) {
-			int64_t sia___l2 = universal_set[sia->elements[sia___l1]].element.i;
-			append_f(___p_s3, (((sia___l2 + sin(sia___l2)) + (pow(sia2, 2))) + cos(sia2))); //print
+	printf("{");
+	for (int ___p_s1_1 = 0; ___p_s1_1 < ___p_s1->cur_size; ___p_s1_1++) {
+		printf("%d", getitem(___p_s1, ___p_s1_1).i);
+		if (___p_s1_1 != ___p_s1->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(___p_s1);
+		list* ___p_s2 = make_list();
+	for (int sia___l1 = 0; sia___l1 < sia->cur_size; sia___l1++) {
+		int64_t sia___l2 = getitem(sia, sia___l1).i;
+		Quant ___q_p2 = {.f=(sia___l2 + sin(sia___l2))};
+		append(___p_s2, ___q_p2); //print
+	}
+	printf("{");
+	for (int ___p_s2_1 = 0; ___p_s2_1 < ___p_s2->cur_size; ___p_s2_1++) {
+		printf("%f", getitem(___p_s2, ___p_s2_1).f);
+		if (___p_s2_1 != ___p_s2->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(___p_s2);
+			list* ___p_s3 = make_list();
+	for (int sia___l1 = 0; sia___l1 < sia->cur_size; sia___l1++) {
+		int64_t sia___l2 = getitem(sia, sia___l1).i;
+		int64_t sia2 = sia___l2; //inline variable
+		for (int sia___l1 = 0; sia___l1 < sia->cur_size; sia___l1++) {
+			int64_t sia___l2 = getitem(sia, sia___l1).i;
+			Quant ___q_p3 = {.f=(((sia___l2 + sin(sia___l2)) + (pow(sia2, 2))) + cos(sia2))};
+			append(___p_s3, ___q_p3); //print
 		}
 	}
-	print_set_f(___p_s3);
-	clear_set_f(___p_s3);
+	printf("{");
+	for (int ___p_s3_1 = 0; ___p_s3_1 < ___p_s3->cur_size; ___p_s3_1++) {
+		printf("%f", getitem(___p_s3, ___p_s3_1).f);
+		if (___p_s3_1 != ___p_s3->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(___p_s3);
 	int64_t a = 10;
 	int64_t b = 15;
-		dy_set_i* r1 = create_set_i();
+		list* r1 = make_list();
 	for (int ___c_s_0___l2 = 1; ___c_s_0___l2 <= (a < b ? a : b); ___c_s_0___l2++){ //mrange
-		append_i(r1, ___c_s_0___l2);
+		Quant ___q_p4 = {.i=___c_s_0___l2};
+		append(r1, ___q_p4);
 	}
 	int64_t ___o_l1 = 0;
 	int64_t ___o_l0 = 0;
-	dy_set_i* print = create_set_i();
-	for (int r1___l1 = 0; r1___l1 < r1->size; r1___l1++) {
-		int64_t r1___l2 = universal_set[r1->elements[r1___l1]].element.i;
+	for (int r1___l1 = 0; r1___l1 < r1->cur_size; r1___l1++) {
+		int64_t r1___l2 = getitem(r1, r1___l1).i;
 		if (((!((int) a % (int) r1___l2)) && (!((int) b % (int) r1___l2))) && (___o_l1 < r1___l2)) {___o_l0 = r1___l2; ___o_l1 = r1___l2;} //max - key
 	}
 	printf("%d\n", ((int) (a * b) / (int) ___o_l0));
-		dy_set_i* ___p_s4 = create_set_i();
-	dy_set_i* ___c_h0 = create_set_i();
-	for (int r1___l1 = 0; r1___l1 < r1->size; r1___l1++) {
-		int64_t r1___l2 = universal_set[r1->elements[r1___l1]].element.i;
-		if (((!((int) a % (int) r1___l2)) && (!((int) b % (int) r1___l2)))) {append_i(___c_h0, r1___l2);}
+		list* ___p_s4 = make_list();
+	list* ___c_h0 = make_list();
+	for (int r1___l1 = 0; r1___l1 < r1->cur_size; r1___l1++) {
+		int64_t r1___l2 = getitem(r1, r1___l1).i;
+		Quant ___q_p5 = {.i=r1___l2};
+		if (((!((int) a % (int) r1___l2)) && (!((int) b % (int) r1___l2)))) {append(___c_h0, ___q_p5);}
 	}
-	for (int ___c_h0___l1 = 0; ___c_h0___l1 < ___c_h0->size; ___c_h0___l1++) {
-		int64_t ___c_h0___l2 = universal_set[___c_h0->elements[___c_h0___l1]].element.i;
-		append_i(___p_s4, ___c_h0___l2); //print
+	for (int ___c_h0___l1 = 0; ___c_h0___l1 < ___c_h0->cur_size; ___c_h0___l1++) {
+		int64_t ___c_h0___l2 = getitem(___c_h0, ___c_h0___l1).i;
+		Quant ___q_p6 = {.i=___c_h0___l2};
+		append(___p_s4, ___q_p6); //print
 	}
-	print_set_i(___p_s4);
-	clear_set_i(___p_s4);
-		dy_set_i* r2 = create_set_i();
+	printf("{");
+	for (int ___p_s4_1 = 0; ___p_s4_1 < ___p_s4->cur_size; ___p_s4_1++) {
+		printf("%d", getitem(___p_s4, ___p_s4_1).i);
+		if (___p_s4_1 != ___p_s4->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(___p_s4);
+		list* r2 = make_list();
 	for (int ___c_s_1___l2 = 1; ___c_s_1___l2 <= 50; ___c_s_1___l2++){ //mrange
-		append_i(r2, (___c_s_1___l2 + 1));
+		Quant ___q_p7 = {.i=(___c_s_1___l2 + 1)};
+		append(r2, ___q_p7);
 	}
-	dy_set_i* primes = create_set_i();
-	for (int r2___l1 = 0; r2___l1 < r2->size; r2___l1++) {
-		int64_t r2___l2 = universal_set[r2->elements[r2___l1]].element.i;
+	list* primes = make_list();
+	for (int r2___l1 = 0; r2___l1 < r2->cur_size; r2___l1++) {
+		int64_t r2___l2 = getitem(r2, r2___l1).i;
 		int64_t ___o_l2 = 1;
-		for (int primes___l1 = 0; primes___l1 < primes->size; primes___l1++) {
-			int64_t primes___l2 = universal_set[primes->elements[primes___l1]].element.i;
+		for (int primes___l1 = 0; primes___l1 < primes->cur_size; primes___l1++) {
+			int64_t primes___l2 = getitem(primes, primes___l1).i;
 			if ((!((int) r2___l2 % (int) primes___l2))) {___o_l2 = 0; goto ___lbl0;} //none
 		}
 ___lbl0:
-		if (___o_l2) {append_i(primes, r2___l2);}
+		Quant ___q_p8 = {.i=r2___l2};
+		if (___o_l2) {append(primes, ___q_p8);}
 	}
-		dy_set_i* ___p_s5 = create_set_i();
-	for (int primes___l1 = 0; primes___l1 < primes->size; primes___l1++) {
-		int64_t primes___l2 = universal_set[primes->elements[primes___l1]].element.i;
-		append_i(___p_s5, primes___l2); //print
+		list* ___p_s5 = make_list();
+	for (int primes___l1 = 0; primes___l1 < primes->cur_size; primes___l1++) {
+		int64_t primes___l2 = getitem(primes, primes___l1).i;
+		Quant ___q_p9 = {.i=primes___l2};
+		append(___p_s5, ___q_p9); //print
 	}
-	print_set_i(___p_s5);
-	clear_set_i(___p_s5);
-		dy_set_i* ___p_s6 = create_set_i();
-	dy_set_i* ___c_h1 = create_set_i();
-		int64_t ri;
+	printf("{");
+	for (int ___p_s5_1 = 0; ___p_s5_1 < ___p_s5->cur_size; ___p_s5_1++) {
+		printf("%d", getitem(___p_s5, ___p_s5_1).i);
+		if (___p_s5_1 != ___p_s5->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(___p_s5);
+		list* ___p_s6 = make_list();
+	list* ___c_h1 = make_list();
 	for (int ___c_s_2___l2 = 0; ___c_s_2___l2 < 60; ___c_s_2___l2++){ //range
-		ri = ___c_s_2___l2;
-		if (((!((int) ri % (int) 3)) && ((int) ri % (int) 7))) {append_i(___c_h1, ri);}
+		int64_t ri = ___c_s_2___l2; //inline variable
+		Quant ___q_p10 = {.i=ri};
+		if (((!((int) ri % (int) 3)) && ((int) ri % (int) 7))) {append(___c_h1, ___q_p10);}
 	}
-	for (int ___c_h1___l1 = 0; ___c_h1___l1 < ___c_h1->size; ___c_h1___l1++) {
-		int64_t ___c_h1___l2 = universal_set[___c_h1->elements[___c_h1___l1]].element.i;
-		append_i(___p_s6, ___c_h1___l2); //print
+	for (int ___c_h1___l1 = 0; ___c_h1___l1 < ___c_h1->cur_size; ___c_h1___l1++) {
+		int64_t ___c_h1___l2 = getitem(___c_h1, ___c_h1___l1).i;
+		Quant ___q_p11 = {.i=___c_h1___l2};
+		append(___p_s6, ___q_p11); //print
 	}
-	print_set_i(___p_s6);
-	clear_set_i(___p_s6);
-		dy_set_i* ___p_s7 = create_set_i();
-		int64_t rec_inline;
-	dy_set_i* ___c_h2 = create_set_i();
-		int64_t range_inline;
+	printf("{");
+	for (int ___p_s6_1 = 0; ___p_s6_1 < ___p_s6->cur_size; ___p_s6_1++) {
+		printf("%d", getitem(___p_s6, ___p_s6_1).i);
+		if (___p_s6_1 != ___p_s6->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(___p_s6);
+		list* ___p_s7 = make_list();
+	list* ___c_h2 = make_list();
 	for (int ___c_s_3___l2 = 1; ___c_s_3___l2 <= 50; ___c_s_3___l2++){ //mrange
-		range_inline = (___c_s_3___l2 + 1);
+		int64_t range_inline = (___c_s_3___l2 + 1); //inline variable
 		int64_t ___o_l3 = 1;
-		for (int ___c_h2___l1 = 0; ___c_h2___l1 < ___c_h2->size; ___c_h2___l1++) {
-			int64_t ___c_h2___l2 = universal_set[___c_h2->elements[___c_h2___l1]].element.i;
+		for (int ___c_h2___l1 = 0; ___c_h2___l1 < ___c_h2->cur_size; ___c_h2___l1++) {
+			int64_t ___c_h2___l2 = getitem(___c_h2, ___c_h2___l1).i;
 			if ((!((int) range_inline % (int) ___c_h2___l2))) {___o_l3 = 0; goto ___lbl1;} //none
 		}
 ___lbl1:
-		if (___o_l3) {append_i(___c_h2, range_inline);}
+		Quant ___q_p12 = {.i=range_inline};
+		if (___o_l3) {append(___c_h2, ___q_p12);}
 	}
-	for (int ___c_h2___l1 = 0; ___c_h2___l1 < ___c_h2->size; ___c_h2___l1++) {
-		int64_t ___c_h2___l2 = universal_set[___c_h2->elements[___c_h2___l1]].element.i;
-		rec_inline = ___c_h2___l2;
-		append_i(___p_s7, ___c_h2___l2); //print
+	for (int ___c_h2___l1 = 0; ___c_h2___l1 < ___c_h2->cur_size; ___c_h2___l1++) {
+		int64_t ___c_h2___l2 = getitem(___c_h2, ___c_h2___l1).i;
+		int64_t rec_inline = ___c_h2___l2; //inline variable
+		Quant ___q_p13 = {.i=___c_h2___l2};
+		append(___p_s7, ___q_p13); //print
 	}
-	print_set_i(___p_s7);
-	clear_set_i(___p_s7);
-	int64_t fibs(int64_t i, int ___ind) {
-		if (is_cached_i(i, ___ind)) {
-			return get_cache_i(i, ___ind);
+	printf("{");
+	for (int ___p_s7_1 = 0; ___p_s7_1 < ___p_s7->cur_size; ___p_s7_1++) {
+		printf("%d", getitem(___p_s7, ___p_s7_1).i);
+		if (___p_s7_1 != ___p_s7->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(___p_s7);
+	dict* fibs___d = make_dict();
+	int64_t fibs(int64_t i) {
+	Quant ___q_p14 = {.i=i};
+		if (dict_has(fibs___d, ___q_p14)) {
+			return dict_get(fibs___d, ___q_p14).i;
 		} else {
-			int64_t ___outp = (fibs((i - 2), 0) + fibs((i - 1), 0));
-			return cache_i(i, ___outp, ___ind);
+			int64_t ___outp = (fibs((i - 2)) + fibs((i - 1)));
+			Quant ___q_p15 = {.i=___outp};
+			return dict_set(fibs___d, ___q_p14, ___q_p15).i;
 		}
 	}
-	cache_i(0, 1, 0);
-	cache_i(1, 1, 0);
-	for (int ___l_var = 0; ___l_var < 16; ___l_var++) printf("%d, ", fibs(___l_var, 0));
-	printf("%d...\n", fibs(16, 0));
-	printf("%d\n", fibs(5, 0));
+	Quant ___q_p16 = {.i=0};
+	Quant ___q_p17 = {.i=1};
+	dict_set(fibs___d, ___q_p16, ___q_p17);
+	Quant ___q_p18 = {.i=1};
+	Quant ___q_p19 = {.i=1};
+	dict_set(fibs___d, ___q_p18, ___q_p19);
+	for (int ___l_var = 0; ___l_var < 16; ___l_var++) printf("%d, ", fibs(___l_var));
+	printf("%d...\n", fibs(16));
+	printf("%d\n", fibs(5));
 		int64_t fibs___l2 = 0;
 	for (int fibs___l2___l1 = 0; 1; fibs___l2___l1++) {
-		fibs___l2 = fibs(fibs___l2___l1, 0);
+		fibs___l2 = fibs(fibs___l2___l1);
 		if ((fibs___l2 > 9000)) goto ___lbl2; //first
 	}
 ___lbl2:
@@ -586,32 +385,39 @@ ___lbl2:
 		return (pow(x, 2));
 	}
 	printf("%f\n", square(7.3));
-		dy_set_i* ___p_s8 = create_set_f();
-	for (int sia___l1 = 0; sia___l1 < sia->size; sia___l1++) {
-		int64_t sia___l2 = universal_set[sia->elements[sia___l1]].element.i;
-		append_f(___p_s8, square(sia___l2)); //print
+		list* ___p_s8 = make_list();
+	for (int sia___l1 = 0; sia___l1 < sia->cur_size; sia___l1++) {
+		int64_t sia___l2 = getitem(sia, sia___l1).i;
+		Quant ___q_p20 = {.f=square(sia___l2)};
+		append(___p_s8, ___q_p20); //print
 	}
-	print_set_f(___p_s8);
-	clear_set_f(___p_s8);
-	int64_t number_of_divisors(int64_t x) {
+	printf("{");
+	for (int ___p_s8_1 = 0; ___p_s8_1 < ___p_s8->cur_size; ___p_s8_1++) {
+		printf("%f", getitem(___p_s8, ___p_s8_1).f);
+		if (___p_s8_1 != ___p_s8->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(___p_s8);
+	int64_t ff(double x) {
+		return ((x < 2) ? 1 : (ff((x - 1)) + ff((x - 2))));
+	}
+		int64_t number_of_divisors(int64_t x) {
 		int64_t ___o_l4 = 1;
-			int64_t all_primes;
-		dy_set_i* ___c_h3 = create_set_i();
-			int64_t r3;
+		list* ___c_h3 = make_list();
 		for (int ___c_s_4___l2 = 1; ___c_s_4___l2 <= x; ___c_s_4___l2++){ //mrange
-			r3 = (___c_s_4___l2 + 1);
+			int64_t r3 = (___c_s_4___l2 + 1); //inline variable
 			int64_t ___o_l5 = 1;
-			for (int ___c_h3___l1 = 0; ___c_h3___l1 < ___c_h3->size; ___c_h3___l1++) {
-				int64_t ___c_h3___l2 = universal_set[___c_h3->elements[___c_h3___l1]].element.i;
+			for (int ___c_h3___l1 = 0; ___c_h3___l1 < ___c_h3->cur_size; ___c_h3___l1++) {
+				int64_t ___c_h3___l2 = getitem(___c_h3, ___c_h3___l1).i;
 				if ((!((int) r3 % (int) ___c_h3___l2))) {___o_l5 = 0; goto ___lbl3;} //none
 			}
 ___lbl3:
-			if (___o_l5) {append_i(___c_h3, r3);}
+			Quant ___q_p21 = {.i=r3};
+			if (___o_l5) {append(___c_h3, ___q_p21);}
 		}
-		for (int ___c_h3___l1 = 0; ___c_h3___l1 < ___c_h3->size; ___c_h3___l1++) {
-			int64_t ___c_h3___l2 = universal_set[___c_h3->elements[___c_h3___l1]].element.i;
-			all_primes = ___c_h3___l2;
-			dy_set_i* number_of_divisors = create_set_i();
+		for (int ___c_h3___l1 = 0; ___c_h3___l1 < ___c_h3->cur_size; ___c_h3___l1++) {
+			int64_t ___c_h3___l2 = getitem(___c_h3, ___c_h3___l1).i;
+			int64_t all_primes = ___c_h3___l2; //inline variable
 				int64_t expon = 0;
 			for (expon = 0; 1; expon++) {
 				if (((int) x % (int) (pow(___c_h3___l2, expon)))) goto ___lbl4; //first
@@ -619,6 +425,7 @@ ___lbl3:
 ___lbl4:
 			if (1) {___o_l4 *= expon;} //product
 		}
+		destroy_list(___c_h3);
 		return ___o_l4;
 	}
 	printf("%d\n", number_of_divisors(840));
@@ -632,7 +439,7 @@ ___lbl5:
 		double x;
 		double y;
 	} Vec2;
-	double magnitude(Vec2* v) {
+		double magnitude(Vec2* v) {
 		return sqrt(((pow(v->x, 2)) + (pow(v->y, 2))));
 	}
 	Vec2 ___s_p___s_p0 = {.x = 8, .y = 15};
@@ -651,48 +458,92 @@ ___lbl5:
 	ComplexContainer* ___s_p___s_p1_1 = malloc(sizeof(ComplexContainer));
 	memcpy(___s_p___s_p1_1, &___s_p___s_p1, sizeof(ComplexContainer));
 	ComplexContainer* cc = ___s_p___s_p1_1;
-	printf("ComplexContainer(v: Vec2(x: %f, y: %f), d: %d, f: %f)\n", cc->v->x, cc->v->y, cc->d, cc->f);
-	Vec2* asd(int64_t i, int ___ind) {
-		if (is_cached_i(i, ___ind)) {
-			return get_cache_s(i, ___ind, sizeof(Vec2));
+	printf("ComplexContainer(v: Vec2(x: %f, y: %f), d: %d, f: %f)\n", ((Vec2*) ((ComplexContainer*) cc)->v)->x, ((Vec2*) ((ComplexContainer*) cc)->v)->y, ((ComplexContainer*) cc)->d, ((ComplexContainer*) cc)->f);
+	dict* asd___d = make_dict();
+			Vec2* asd(int64_t i) {
+	Quant ___q_p22 = {.i=i};
+		if (dict_has(asd___d, ___q_p22)) {
+					return dict_get(asd___d, ___q_p22).s;
 		} else {
 	Vec2 ___s_p___s_p3 = {.x = (2 * i), .y = (pow(i, 2))};
 	Vec2* ___s_p___s_p3_1 = malloc(sizeof(Vec2));
 	memcpy(___s_p___s_p3_1, &___s_p___s_p3, sizeof(Vec2));
 			Vec2* ___outp = ___s_p___s_p3_1;
-			return cache_s(i, ___outp, ___ind, sizeof(Vec2));
+			Vec2* ___c_p0 = malloc(sizeof(Vec2));
+			memcpy(___c_p0, ___outp, sizeof(Vec2));
+			Quant ___q_p23 = {.s=___c_p0};
+			free(___s_p___s_p3_1);
+			return dict_set(asd___d, ___q_p22, ___q_p23).s;
 		}
 	}
 		Vec2* asd___l2 = 0;
 	for (int asd___l2___l1 = 0; 1; asd___l2___l1++) {
-		asd___l2 = asd(asd___l2___l1, 1);
+		asd___l2 = asd(asd___l2___l1);
 		if ((magnitude(asd___l2) > 30)) goto ___lbl6; //first
 	}
 ___lbl6:
-	printf("Vec2(x: %f, y: %f)\n", asd___l2->x, asd___l2->y);
-		dy_set_i* ___p_s9 = create_set_f();
+	printf("Vec2(x: %f, y: %f)\n", ((Vec2*) asd___l2)->x, ((Vec2*) asd___l2)->y);
+		Vec2* to_vec(int64_t x) {
+		Vec2 ___s_p___s_p4 = {.x = x, .y = x};
+		Vec2* ___s_p___s_p4_1 = malloc(sizeof(Vec2));
+		memcpy(___s_p___s_p4_1, &___s_p___s_p4, sizeof(Vec2));
+		Vec2* ___c_p1 = malloc(sizeof(Vec2));
+		memcpy(___c_p1, ___s_p___s_p4_1, sizeof(Vec2));
+		free(___s_p___s_p4_1);
+		return ___c_p1;
+	}
+	printf("Vec2(x: %f, y: %f)\n", ((Vec2*) to_vec(8))->x, ((Vec2*) to_vec(8))->y);
+		list* ___p_s9 = make_list();
 	for (int ___c_s_5 = 0; ___c_s_5 < 5; ___c_s_5++){
 		double ___c_s_6___l2 = ((1 - (-1)) * ((float)rand() / RAND_MAX)) + (-1); //random
-		append_f(___p_s9, ___c_s_6___l2); //print
+		Quant ___q_p24 = {.f=___c_s_6___l2};
+		append(___p_s9, ___q_p24); //print
 	}
-	print_set_f(___p_s9);
-	clear_set_f(___p_s9);
-			dy_set_i* ran_vecs = create_set_i();
-	for (int ___c_s_7 = 0; ___c_s_7 < 50; ___c_s_7++){
+	printf("{");
+	for (int ___p_s9_1 = 0; ___p_s9_1 < ___p_s9->cur_size; ___p_s9_1++) {
+		printf("%f", getitem(___p_s9, ___p_s9_1).f);
+		if (___p_s9_1 != ___p_s9->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(___p_s9);
+			list* ran_vecs = make_list();
+	for (int ___c_s_7 = 0; ___c_s_7 < 5000; ___c_s_7++){
 		double ___c_s_8___l2 = ((1 - (-1)) * ((float)rand() / RAND_MAX)) + (-1); //random
-		for (int ___c_s_9 = 0; ___c_s_9 < 50; ___c_s_9++){
+		for (int ___c_s_9 = 0; ___c_s_9 < 500; ___c_s_9++){
 			double ___c_s_10___l2 = ((1 - (-1)) * ((float)rand() / RAND_MAX)) + (-1); //random
-	Vec2 ___s_p___s_p4 = {.x = ___c_s_8___l2, .y = ___c_s_10___l2};
-			Vec2* ___s_p___s_p4_1 = malloc(sizeof(Vec2));
-			memcpy(___s_p___s_p4_1, &___s_p___s_p4, sizeof(Vec2));
-			append_s(ran_vecs, ___s_p___s_p4_1, sizeof(Vec2));
+	Vec2 ___s_p___s_p5 = {.x = ___c_s_8___l2, .y = ___c_s_10___l2};
+			Vec2* ___s_p___s_p5_1 = malloc(sizeof(Vec2));
+			memcpy(___s_p___s_p5_1, &___s_p___s_p5, sizeof(Vec2));
+			Vec2* ___c_p2 = malloc(sizeof(Vec2));
+			memcpy(___c_p2, ___s_p___s_p5_1, sizeof(Vec2));
+			Quant ___q_p25 = {.s=___c_p2};
+			append(ran_vecs, ___q_p25);
+		free(___s_p___s_p5_1);
 		}
 	}
 	int ___o_l6_counter = 0;
 	int64_t ___o_l6 = 0;
-	for (int ran_vecs___l1 = 0; ran_vecs___l1 < ran_vecs->size; ran_vecs___l1++) {
-		Vec2* ran_vecs___l2 = universal_set[ran_vecs->elements[ran_vecs___l1]].element.s;
+	for (int ran_vecs___l1 = 0; ran_vecs___l1 < ran_vecs->cur_size; ran_vecs___l1++) {
+		Vec2* ran_vecs___l2 = getitem(ran_vecs, ran_vecs___l1).s;
 		___o_l6 += (((pow(ran_vecs___l2->x, 2)) + (pow(ran_vecs___l2->y, 2))) < 1); ___o_l6_counter++; //average
 	}
 	printf("%f\n", ((float) ___o_l6 / ___o_l6_counter * 4));
+	destroy_list(r1);
+	destroy_list(___c_h0);
+	destroy_list(r2);
+	destroy_list(primes);
+	destroy_list(___c_h1);
+	destroy_list(___c_h2);
+	destroy_dict(fibs___d);
+	free(___s_p___s_p0_1);
+	free(___s_p___s_p2_1);
+	free(___s_p___s_p1_1);
+	for (int asd___d___l1 = 0; asd___d___l1 < asd___d->cur_size; asd___d___l1++) {
+		free(asd___d->pairs[asd___d___l1].value.s);
+	}
+	destroy_dict(asd___d);
+	for (int ran_vecs___l1 = 0; ran_vecs___l1 < ran_vecs->cur_size; ran_vecs___l1++) {
+		free(getitem(ran_vecs, ran_vecs___l1).s);
+	}
+	destroy_list(ran_vecs);
 }
