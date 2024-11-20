@@ -1,0 +1,33 @@
+package number_theory
+
+def is_prime(p in Z) => p < 2 ? 0 : none(p !% r with mrange(2, sqrt(p)) as r)
+
+def gcd(a in Z, b in Z) in Z
+    while b != 0
+        c := a % b
+        a = b
+        b = c
+    end
+    return abs(a)
+end
+
+def lcm(a in Z, b in Z) => (!a || !b) ? 0 : a * b // gcd(a, b)
+
+def primes_till(n in Z) in {Z} => {r where none(r !% outp) with mrange(2, n) as r} as outp in {Z}
+
+def is_square(n in Z) => (n < 0) ? 0 : int(sqrt(n)) ** 2 == n
+
+def factors(n in Z) in {Z}
+    outp := {1, n}
+    loop mrange(2, sqrt(n)) as i
+        if n !% i
+            outp ++= i
+            outp ++= n//i
+        end
+    end
+    return outp
+end
+
+end
+
+#A lot more functions are planned to be added to the library in later updates

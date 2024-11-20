@@ -1,4 +1,4 @@
-//Compiled by Uberort v1.1.0
+//Compiled by Uberort v1.2.0
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -144,6 +144,7 @@ int dict_has(dict* self, Quant key) {
     while (pair_index != -1) {
         if (memcmp(&self->pairs[pair_index].key, &key, sizeof(Quant)) == 0) {
             return 1;
+            return 1;
         }
         pair_index = self->pairs[pair_index].next;
     }
@@ -179,273 +180,477 @@ double gauss_cd(double x) {
 
 int main() {
 	srand ( time(NULL) );
-	int64_t ia = 4;
-	double fb = 7.0;
-	double ti_a = 6.75;
-	printf("%f\n", (ia + fb));
-	Quant ___b_a0[4] = {{.i=1}, {.i=3}, {.i=5}, {.i=9}};
-	list* sia = array_to_list(___b_a0, 4);
-	Quant ___b_a1[3] = {{.i=1}, {.i=9}, {.i=40}};
-	list* sib = array_to_list(___b_a1, 3);
-			list* ___p_s0 = make_list();
-	for (int sia___l1 = 0; sia___l1 < sia->cur_size; sia___l1++) {
-		int64_t sia___l2 = getitem(sia, sia___l1).i;
-		for (int sib___l1 = 0; sib___l1 < sib->cur_size; sib___l1++) {
-			int64_t sib___l2 = getitem(sib, sib___l1).i;
-			Quant ___q_p0 = {.i=(sia___l2 + sib___l2)};
-			append(___p_s0, ___q_p0); //print
-		}
-	}
-	printf("{");
-	for (int ___p_s0_1 = 0; ___p_s0_1 < ___p_s0->cur_size; ___p_s0_1++) {
-		printf("%d", getitem(___p_s0, ___p_s0_1).i);
-		if (___p_s0_1 != ___p_s0->cur_size-1) printf(", ");
-	}
-	printf("}\n");
-	destroy_list(___p_s0);
-		list* ___p_s1 = make_list();
-	for (int sia___l1 = 0; sia___l1 < sia->cur_size; sia___l1++) {
-		int64_t sia___l2 = getitem(sia, sia___l1).i;
-		Quant ___q_p1 = {.i=(sia___l2 + sia___l2)};
-		append(___p_s1, ___q_p1); //print
-	}
-	printf("{");
-	for (int ___p_s1_1 = 0; ___p_s1_1 < ___p_s1->cur_size; ___p_s1_1++) {
-		printf("%d", getitem(___p_s1, ___p_s1_1).i);
-		if (___p_s1_1 != ___p_s1->cur_size-1) printf(", ");
-	}
-	printf("}\n");
-	destroy_list(___p_s1);
-		list* ___p_s2 = make_list();
-	for (int sia___l1 = 0; sia___l1 < sia->cur_size; sia___l1++) {
-		int64_t sia___l2 = getitem(sia, sia___l1).i;
-		Quant ___q_p2 = {.f=(sia___l2 + sin(sia___l2))};
-		append(___p_s2, ___q_p2); //print
-	}
-	printf("{");
-	for (int ___p_s2_1 = 0; ___p_s2_1 < ___p_s2->cur_size; ___p_s2_1++) {
-		printf("%f", getitem(___p_s2, ___p_s2_1).f);
-		if (___p_s2_1 != ___p_s2->cur_size-1) printf(", ");
-	}
-	printf("}\n");
-	destroy_list(___p_s2);
-			list* ___p_s3 = make_list();
-	for (int sia___l1 = 0; sia___l1 < sia->cur_size; sia___l1++) {
-		int64_t sia___l2 = getitem(sia, sia___l1).i;
-		int64_t sia2 = sia___l2; //inline variable
-		for (int sia___l1 = 0; sia___l1 < sia->cur_size; sia___l1++) {
-			int64_t sia___l2 = getitem(sia, sia___l1).i;
-			Quant ___q_p3 = {.f=(((sia___l2 + sin(sia___l2)) + (pow(sia2, 2))) + cos(sia2))};
-			append(___p_s3, ___q_p3); //print
-		}
-	}
-	printf("{");
-	for (int ___p_s3_1 = 0; ___p_s3_1 < ___p_s3->cur_size; ___p_s3_1++) {
-		printf("%f", getitem(___p_s3, ___p_s3_1).f);
-		if (___p_s3_1 != ___p_s3->cur_size-1) printf(", ");
-	}
-	printf("}\n");
-	destroy_list(___p_s3);
-	int64_t a = 10;
-	int64_t b = 15;
-		list* r1 = make_list();
-	for (int ___c_s_0___l2 = 1; ___c_s_0___l2 <= (a < b ? a : b); ___c_s_0___l2++){ //mrange
-		Quant ___q_p4 = {.i=___c_s_0___l2};
-		append(r1, ___q_p4);
-	}
-	int64_t ___o_l1 = 0;
-	int64_t ___o_l0 = 0;
-	for (int r1___l1 = 0; r1___l1 < r1->cur_size; r1___l1++) {
-		int64_t r1___l2 = getitem(r1, r1___l1).i;
-		if (((!((int) a % (int) r1___l2)) && (!((int) b % (int) r1___l2))) && (___o_l1 < r1___l2)) {___o_l0 = r1___l2; ___o_l1 = r1___l2;} //max - key
-	}
-	printf("%d\n", ((int) (a * b) / (int) ___o_l0));
-		list* ___p_s4 = make_list();
-	list* ___c_h0 = make_list();
-	for (int r1___l1 = 0; r1___l1 < r1->cur_size; r1___l1++) {
-		int64_t r1___l2 = getitem(r1, r1___l1).i;
-		Quant ___q_p5 = {.i=r1___l2};
-		if (((!((int) a % (int) r1___l2)) && (!((int) b % (int) r1___l2)))) {append(___c_h0, ___q_p5);}
-	}
-	for (int ___c_h0___l1 = 0; ___c_h0___l1 < ___c_h0->cur_size; ___c_h0___l1++) {
-		int64_t ___c_h0___l2 = getitem(___c_h0, ___c_h0___l1).i;
-		Quant ___q_p6 = {.i=___c_h0___l2};
-		append(___p_s4, ___q_p6); //print
-	}
-	printf("{");
-	for (int ___p_s4_1 = 0; ___p_s4_1 < ___p_s4->cur_size; ___p_s4_1++) {
-		printf("%d", getitem(___p_s4, ___p_s4_1).i);
-		if (___p_s4_1 != ___p_s4->cur_size-1) printf(", ");
-	}
-	printf("}\n");
-	destroy_list(___p_s4);
-		list* r2 = make_list();
-	for (int ___c_s_1___l2 = 1; ___c_s_1___l2 <= 50; ___c_s_1___l2++){ //mrange
-		Quant ___q_p7 = {.i=(___c_s_1___l2 + 1)};
-		append(r2, ___q_p7);
-	}
-	list* primes = make_list();
-	for (int r2___l1 = 0; r2___l1 < r2->cur_size; r2___l1++) {
-		int64_t r2___l2 = getitem(r2, r2___l1).i;
-		int64_t ___o_l2 = 1;
-		for (int primes___l1 = 0; primes___l1 < primes->cur_size; primes___l1++) {
-			int64_t primes___l2 = getitem(primes, primes___l1).i;
-			if ((!((int) r2___l2 % (int) primes___l2))) {___o_l2 = 0; goto ___lbl0;} //none
+	//start of math.number_theory
+		int64_t is_prime(int64_t math___p) {
+		int64_t math______o_l0 = 1;
+		for (int ___c_s_0___l2 = 2; ___c_s_0___l2 <= sqrt(math___p); ___c_s_0___l2++){ //range
+			int64_t math___r = ___c_s_0___l2; //inline variable
+			if ((!((int64_t) math___p % (int64_t) math___r))) {math______o_l0 = 0; goto ___lbl0;} //none
 		}
 ___lbl0:
-		Quant ___q_p8 = {.i=r2___l2};
-		if (___o_l2) {append(primes, ___q_p8);}
+		return ((math___p < 2) ? 0 : math______o_l0);
 	}
-		list* ___p_s5 = make_list();
-	for (int primes___l1 = 0; primes___l1 < primes->cur_size; primes___l1++) {
-		int64_t primes___l2 = getitem(primes, primes___l1).i;
-		Quant ___q_p9 = {.i=primes___l2};
-		append(___p_s5, ___q_p9); //print
+	int64_t gcd(int64_t math___a, int64_t math___b) {
+		while ((math___b != 0)) {
+		int64_t math___c = ((int64_t) math___a % (int64_t) math___b);
+		math___a = math___b;
+		math___b = math___c;
 	}
-	printf("{");
-	for (int ___p_s5_1 = 0; ___p_s5_1 < ___p_s5->cur_size; ___p_s5_1++) {
-		printf("%d", getitem(___p_s5, ___p_s5_1).i);
-		if (___p_s5_1 != ___p_s5->cur_size-1) printf(", ");
-	}
-	printf("}\n");
-	destroy_list(___p_s5);
-		list* ___p_s6 = make_list();
-	list* ___c_h1 = make_list();
-	for (int ___c_s_2___l2 = 0; ___c_s_2___l2 < 60; ___c_s_2___l2++){ //range
-		int64_t ri = ___c_s_2___l2; //inline variable
-		Quant ___q_p10 = {.i=ri};
-		if (((!((int) ri % (int) 3)) && ((int) ri % (int) 7))) {append(___c_h1, ___q_p10);}
-	}
-	for (int ___c_h1___l1 = 0; ___c_h1___l1 < ___c_h1->cur_size; ___c_h1___l1++) {
-		int64_t ___c_h1___l2 = getitem(___c_h1, ___c_h1___l1).i;
-		Quant ___q_p11 = {.i=___c_h1___l2};
-		append(___p_s6, ___q_p11); //print
-	}
-	printf("{");
-	for (int ___p_s6_1 = 0; ___p_s6_1 < ___p_s6->cur_size; ___p_s6_1++) {
-		printf("%d", getitem(___p_s6, ___p_s6_1).i);
-		if (___p_s6_1 != ___p_s6->cur_size-1) printf(", ");
-	}
-	printf("}\n");
-	destroy_list(___p_s6);
-		list* ___p_s7 = make_list();
-	list* ___c_h2 = make_list();
-	for (int ___c_s_3___l2 = 1; ___c_s_3___l2 <= 50; ___c_s_3___l2++){ //mrange
-		int64_t range_inline = (___c_s_3___l2 + 1); //inline variable
-		int64_t ___o_l3 = 1;
-		for (int ___c_h2___l1 = 0; ___c_h2___l1 < ___c_h2->cur_size; ___c_h2___l1++) {
-			int64_t ___c_h2___l2 = getitem(___c_h2, ___c_h2___l1).i;
-			if ((!((int) range_inline % (int) ___c_h2___l2))) {___o_l3 = 0; goto ___lbl1;} //none
+	return abs(math___a);
+}
+	int64_t lcm(int64_t math___a, int64_t math___b) {
+	return (((!math___a) || (!math___b)) ? 0 : ((int64_t) (math___a * math___b) / (int64_t) gcd(math___a, math___b)));
+}
+list* primes_till(int64_t math___n) {
+	list* ___outp = make_list();
+	list* math______c_h0 = make_list();
+	for (int ___c_s_1___l2 = 2; ___c_s_1___l2 <= math___n; ___c_s_1___l2++){ //range
+		int64_t math___r = ___c_s_1___l2; //inline variable
+		int64_t math______o_l1 = 1;
+		for (int math______c_h0___l1 = 0; math______c_h0___l1 < math______c_h0->cur_size; math______c_h0___l1++) {
+			int64_t math______c_h0___l2 = getitem(math______c_h0, math______c_h0___l1).i;
+			if ((!((int64_t) math___r % (int64_t) math______c_h0___l2))) {math______o_l1 = 0; goto ___lbl1;} //none
 		}
 ___lbl1:
-		Quant ___q_p12 = {.i=range_inline};
-		if (___o_l3) {append(___c_h2, ___q_p12);}
+		Quant ___q_p0 = {.i=math___r};
+		if (math______o_l1) {append(math______c_h0, ___q_p0);}
 	}
-	for (int ___c_h2___l1 = 0; ___c_h2___l1 < ___c_h2->cur_size; ___c_h2___l1++) {
-		int64_t ___c_h2___l2 = getitem(___c_h2, ___c_h2___l1).i;
-		int64_t rec_inline = ___c_h2___l2; //inline variable
-		Quant ___q_p13 = {.i=___c_h2___l2};
-		append(___p_s7, ___q_p13); //print
+	for (int math______c_h0___l1 = 0; math______c_h0___l1 < math______c_h0->cur_size; math______c_h0___l1++) {
+		int64_t math______c_h0___l2 = getitem(math______c_h0, math______c_h0___l1).i;
+		int64_t math___outp = math______c_h0___l2; //inline variable
+		Quant ___q_p1 = {.i=math______c_h0___l2};
+		append(___outp, ___q_p1);
 	}
-	printf("{");
-	for (int ___p_s7_1 = 0; ___p_s7_1 < ___p_s7->cur_size; ___p_s7_1++) {
-		printf("%d", getitem(___p_s7, ___p_s7_1).i);
-		if (___p_s7_1 != ___p_s7->cur_size-1) printf(", ");
-	}
-	printf("}\n");
-	destroy_list(___p_s7);
-	dict* fibs___d = make_dict();
-	int64_t fibs(int64_t i) {
-	Quant ___q_p14 = {.i=i};
-		if (dict_has(fibs___d, ___q_p14)) {
-			return dict_get(fibs___d, ___q_p14).i;
-		} else {
-			int64_t ___outp = (fibs((i - 2)) + fibs((i - 1)));
-			Quant ___q_p15 = {.i=___outp};
-			return dict_set(fibs___d, ___q_p14, ___q_p15).i;
+	destroy_list(math______c_h0);
+	return ___outp;
+}
+	int64_t is_square(int64_t math___n) {
+	return ((math___n < 0) ? 0 : ((pow(((int) sqrt(math___n)), 2)) == math___n));
+}
+list* factors(int64_t math___n) {
+	Quant ___b_a0[2] = {{.i=1}, {.i=math___n}};
+	list* math___outp = array_to_list(___b_a0, 2);
+	for (int ___c_s_2___l2 = 2; ___c_s_2___l2 <= sqrt(math___n); ___c_s_2___l2++){ //range
+		int64_t math___i = ___c_s_2___l2; //inline variable
+		if ((!((int64_t) math___n % (int64_t) math___i))) {
+			Quant ___q_p2 = {.i=math___i};
+			append(math___outp, ___q_p2); //concatenation
+			Quant ___q_p3 = {.i=((int64_t) math___n / (int64_t) math___i)};
+			append(math___outp, ___q_p3); //concatenation
 		}
 	}
-	Quant ___q_p16 = {.i=0};
-	Quant ___q_p17 = {.i=1};
-	dict_set(fibs___d, ___q_p16, ___q_p17);
-	Quant ___q_p18 = {.i=1};
-	Quant ___q_p19 = {.i=1};
-	dict_set(fibs___d, ___q_p18, ___q_p19);
-	for (int ___l_var = 0; ___l_var < 16; ___l_var++) printf("%d, ", fibs(___l_var));
-	printf("%d...\n", fibs(16));
-	printf("%d\n", fibs(5));
-		int64_t fibs___l2 = 0;
-	for (int fibs___l2___l1 = 0; 1; fibs___l2___l1++) {
-		fibs___l2 = fibs(fibs___l2___l1);
-		if ((fibs___l2 > 9000)) goto ___lbl2; //first
+		list* math______c_h1 = make_list();
+	for (int math___outp___l1 = 0; math___outp___l1 < math___outp->cur_size; math___outp___l1++) {
+		int64_t math___outp___l2 = getitem(math___outp, math___outp___l1).i;
+		Quant ___q_p4 = {.i=math___outp___l2};
+		append(math______c_h1, ___q_p4); //sum-up
+	}
+	return math______c_h1;
+destroy_list(math______c_h1);
+}
+	//end of math.number_theory
+	int64_t main___ia = 4;
+	double main___fb = 7.0;
+	double main___ti_a = 6.75;
+	printf("%s\n", "Hello World!");
+	printf("%lf\n", (main___ia + main___fb));
+	Quant ___b_a0[4] = {{.i=1}, {.i=3}, {.i=5}, {.i=9}};
+	list* main___sia = array_to_list(___b_a0, 4);
+	Quant ___b_a1[3] = {{.i=1}, {.i=9}, {.i=40}};
+	list* main___sib = array_to_list(___b_a1, 3);
+			list* main______p_s0 = make_list();
+	for (int main___sia___l1 = 0; main___sia___l1 < main___sia->cur_size; main___sia___l1++) {
+		int64_t main___sia___l2 = getitem(main___sia, main___sia___l1).i;
+		for (int main___sib___l1 = 0; main___sib___l1 < main___sib->cur_size; main___sib___l1++) {
+			int64_t main___sib___l2 = getitem(main___sib, main___sib___l1).i;
+			Quant ___q_p0 = {.i=(main___sia___l2 + main___sib___l2)};
+			append(main______p_s0, ___q_p0); //print
+		}
+	}
+	printf("{");
+	for (int main______p_s0_1 = 0; main______p_s0_1 < main______p_s0->cur_size; main______p_s0_1++) {
+		printf("%ld", getitem(main______p_s0, main______p_s0_1).i);
+		if (main______p_s0_1 != main______p_s0->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(main______p_s0);
+		list* main______p_s1 = make_list();
+	for (int main___sia___l1 = 0; main___sia___l1 < main___sia->cur_size; main___sia___l1++) {
+		int64_t main___sia___l2 = getitem(main___sia, main___sia___l1).i;
+		Quant ___q_p1 = {.f=sin(main___sia___l2)};
+		append(main______p_s1, ___q_p1); //print
+	}
+	printf("{");
+	for (int main______p_s1_1 = 0; main______p_s1_1 < main______p_s1->cur_size; main______p_s1_1++) {
+		printf("%lf", getitem(main______p_s1, main______p_s1_1).f);
+		if (main______p_s1_1 != main______p_s1->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(main______p_s1);
+		list* main______p_s2 = make_list();
+		list* main______c_h0 = make_list();
+	for (int main___sia___l1 = 0; main___sia___l1 < main___sia->cur_size; main___sia___l1++) {
+		int64_t main___sia___l2 = getitem(main___sia, main___sia___l1).i;
+		Quant ___q_p2 = {.i=main___sia___l2};
+		append(main______c_h0, ___q_p2); //sum-up
+	}
+	for (int main___sib___l1 = 0; main___sib___l1 < main___sib->cur_size; main___sib___l1++) {
+		int64_t main___sib___l2 = getitem(main___sib, main___sib___l1).i;
+		Quant ___q_p3 = {.i=main___sib___l2};
+	append(main______c_h0, ___q_p3); //concatenation
+	}
+	for (int main______c_h0___l1 = 0; main______c_h0___l1 < main______c_h0->cur_size; main______c_h0___l1++) {
+		int64_t main______c_h0___l2 = getitem(main______c_h0, main______c_h0___l1).i;
+		Quant ___q_p4 = {.i=main______c_h0___l2};
+		append(main______p_s2, ___q_p4); //print
+	}
+	printf("{");
+	for (int main______p_s2_1 = 0; main______p_s2_1 < main______p_s2->cur_size; main______p_s2_1++) {
+		printf("%ld", getitem(main______p_s2, main______p_s2_1).i);
+		if (main______p_s2_1 != main______p_s2->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(main______p_s2);
+			list* main______c_h1 = make_list();
+	for (int main___sia___l1 = 0; main___sia___l1 < main___sia->cur_size; main___sia___l1++) {
+		int64_t main___sia___l2 = getitem(main___sia, main___sia___l1).i;
+		for (int main___sib___l1 = 0; main___sib___l1 < main___sib->cur_size; main___sib___l1++) {
+			int64_t main___sib___l2 = getitem(main___sib, main___sib___l1).i;
+			Quant ___q_p5 = {.i=(main___sia___l2 + main___sib___l2)};
+			append(main______c_h1, ___q_p5); //long concatenation
+		}
+	}
+	for(int64_t main______c_h1___l1 = 0; main______c_h1___l1 < main______c_h1->cur_size; main______c_h1___l1++) append(main___sib, getitem(main______c_h1, main______c_h1___l1)); //concatenation
+		list* main______p_s3 = make_list();
+	for (int main___sib___l1 = 0; main___sib___l1 < main___sib->cur_size; main___sib___l1++) {
+		int64_t main___sib___l2 = getitem(main___sib, main___sib___l1).i;
+		Quant ___q_p6 = {.i=main___sib___l2};
+		append(main______p_s3, ___q_p6); //print
+	}
+	printf("{");
+	for (int main______p_s3_1 = 0; main______p_s3_1 < main______p_s3->cur_size; main______p_s3_1++) {
+		printf("%ld", getitem(main______p_s3, main______p_s3_1).i);
+		if (main______p_s3_1 != main______p_s3->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(main______p_s3);
+		list* main______p_s4 = make_list();
+	for (int main___sia___l1 = 0; main___sia___l1 < main___sia->cur_size; main___sia___l1++) {
+		int64_t main___sia___l2 = getitem(main___sia, main___sia___l1).i;
+		Quant ___q_p7 = {.i=(main___sia___l2 + main___sia___l2)};
+		append(main______p_s4, ___q_p7); //print
+	}
+	printf("{");
+	for (int main______p_s4_1 = 0; main______p_s4_1 < main______p_s4->cur_size; main______p_s4_1++) {
+		printf("%ld", getitem(main______p_s4, main______p_s4_1).i);
+		if (main______p_s4_1 != main______p_s4->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(main______p_s4);
+		list* main______p_s5 = make_list();
+	for (int main___sia___l1 = 0; main___sia___l1 < main___sia->cur_size; main___sia___l1++) {
+		int64_t main___sia___l2 = getitem(main___sia, main___sia___l1).i;
+		Quant ___q_p8 = {.f=(main___sia___l2 + sin(main___sia___l2))};
+		append(main______p_s5, ___q_p8); //print
+	}
+	printf("{");
+	for (int main______p_s5_1 = 0; main______p_s5_1 < main______p_s5->cur_size; main______p_s5_1++) {
+		printf("%lf", getitem(main______p_s5, main______p_s5_1).f);
+		if (main______p_s5_1 != main______p_s5->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(main______p_s5);
+			list* main______p_s6 = make_list();
+	for (int main___sia___l1 = 0; main___sia___l1 < main___sia->cur_size; main___sia___l1++) {
+		int64_t main___sia___l2 = getitem(main___sia, main___sia___l1).i;
+		int64_t main___sia2 = main___sia___l2; //inline variable
+		for (int main___sia___l1 = 0; main___sia___l1 < main___sia->cur_size; main___sia___l1++) {
+			int64_t main___sia___l2 = getitem(main___sia, main___sia___l1).i;
+			Quant ___q_p9 = {.f=(((main___sia___l2 + sin(main___sia___l2)) + (pow(main___sia2, 2))) + cos(main___sia2))};
+			append(main______p_s6, ___q_p9); //print
+		}
+	}
+	printf("{");
+	for (int main______p_s6_1 = 0; main______p_s6_1 < main______p_s6->cur_size; main______p_s6_1++) {
+		printf("%lf", getitem(main______p_s6, main______p_s6_1).f);
+		if (main______p_s6_1 != main______p_s6->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(main______p_s6);
+	Quant ___b_a2[4] = {{.i=0}, {.i=1}, {.i=2}, {.i=3}};
+	list* main___sia3 = array_to_list(___b_a2, 4);
+		list* main______p_s7 = make_list();
+	for (int main___sia___l1 = 0; main___sia___l1 < main___sia->cur_size; main___sia___l1++) {
+		int64_t main___sia___l2 = getitem(main___sia, main___sia___l1).i;
+		int64_t main___sia3___l2 = getitem(main___sia3, main___sia___l1).i; //pair
+		Quant ___q_p10 = {.f=(((main___sia___l2 + sin(main___sia___l2)) + (pow(main___sia3___l2, 2))) + cos(main___sia3___l2))};
+		append(main______p_s7, ___q_p10); //print
+	}
+	printf("{");
+	for (int main______p_s7_1 = 0; main______p_s7_1 < main______p_s7->cur_size; main______p_s7_1++) {
+		printf("%lf", getitem(main______p_s7, main______p_s7_1).f);
+		if (main______p_s7_1 != main______p_s7->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(main______p_s7);
+	if ((main___ia > 0)) {
+		printf("%s\n", "+");
+	}
+	else if ((main___ia < 0)) {
+		printf("%s\n", "-");
+	}
+	else {
+		printf("%s\n", "0");
+	}
+	int64_t main___sum_of_sia = 0;
+	for (int main___sia___l1 = 0; main___sia___l1 < main___sia->cur_size; main___sia___l1++) {
+		int64_t main___sia___l2 = getitem(main___sia, main___sia___l1).i;
+		main___sum_of_sia += main___sia___l2;
+	}
+	printf("%ld\n", main___sum_of_sia);
+	main___sum_of_sia = 0;
+	for (int main___sia___l1 = 0; main___sia___l1 < main___sia->cur_size; main___sia___l1++) {
+		int64_t main___sia___l2 = getitem(main___sia, main___sia___l1).i;
+		main___sum_of_sia += main___sia___l2;
+	}
+	printf("%ld\n", main___sum_of_sia);
+	int64_t main______o_l0 = 0;
+	for (int main___sia___l1 = 0; main___sia___l1 < main___sia->cur_size; main___sia___l1++) {
+		int64_t main___sia___l2 = getitem(main___sia, main___sia___l1).i;
+		main______o_l0 += main___sia___l2; //sum
+	}
+	printf("%ld\n", main______o_l0);
+	main___sum_of_sia = 0;
+	for (int main___sia___l1 = 0; main___sia___l1 < main___sia->cur_size; main___sia___l1++) {
+		int64_t main___sia___l2 = getitem(main___sia, main___sia___l1).i;
+		int64_t main___i = main___sia___l2; //inline variable
+		main___sum_of_sia += main___i;
+	}
+	printf("%ld\n", main___sum_of_sia);
+	int64_t main___product_sum = 0;
+	for (int main___sia___l1 = 0; main___sia___l1 < main___sia->cur_size; main___sia___l1++) {
+		int64_t main___sia___l2 = getitem(main___sia, main___sia___l1).i;
+		int64_t main___sia3___l2 = getitem(main___sia3, main___sia___l1).i; //pair
+		main___product_sum += (main___sia___l2 * main___sia3___l2);
+	}
+	printf("%ld\n", main___product_sum);
+	int64_t main___a = 10;
+	int64_t main___b = 15;
+		list* main___r1 = make_list();
+	for (int ___c_s_0___l2 = 1; ___c_s_0___l2 <= (main___a < main___b ? main___a : main___b); ___c_s_0___l2++){ //range
+		Quant ___q_p11 = {.i=___c_s_0___l2};
+		append(main___r1, ___q_p11);
+	}
+	int64_t ___o_l2 = 0;
+	int64_t main______o_l1 = 0;
+	for (int main___r1___l1 = 0; main___r1___l1 < main___r1->cur_size; main___r1___l1++) {
+		int64_t main___r1___l2 = getitem(main___r1, main___r1___l1).i;
+		if (((!((int64_t) main___a % (int64_t) main___r1___l2)) && (!((int64_t) main___b % (int64_t) main___r1___l2))) && (___o_l2 < main___r1___l2)) {main______o_l1 = main___r1___l2; ___o_l2 = main___r1___l2;} //max - key
+	}
+	printf("%ld\n", ((int64_t) (main___a * main___b) / (int64_t) main______o_l1));
+		list* main______p_s8 = make_list();
+	list* main______c_h2 = make_list();
+	for (int main___r1___l1 = 0; main___r1___l1 < main___r1->cur_size; main___r1___l1++) {
+		int64_t main___r1___l2 = getitem(main___r1, main___r1___l1).i;
+		Quant ___q_p12 = {.i=main___r1___l2};
+		if (((!((int64_t) main___a % (int64_t) main___r1___l2)) && (!((int64_t) main___b % (int64_t) main___r1___l2)))) {append(main______c_h2, ___q_p12);}
+	}
+	for (int main______c_h2___l1 = 0; main______c_h2___l1 < main______c_h2->cur_size; main______c_h2___l1++) {
+		int64_t main______c_h2___l2 = getitem(main______c_h2, main______c_h2___l1).i;
+		Quant ___q_p13 = {.i=main______c_h2___l2};
+		append(main______p_s8, ___q_p13); //print
+	}
+	printf("{");
+	for (int main______p_s8_1 = 0; main______p_s8_1 < main______p_s8->cur_size; main______p_s8_1++) {
+		printf("%ld", getitem(main______p_s8, main______p_s8_1).i);
+		if (main______p_s8_1 != main______p_s8->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(main______p_s8);
+		list* main___r2 = make_list();
+	for (int ___c_s_1___l2 = 1; ___c_s_1___l2 <= 50; ___c_s_1___l2++){ //range
+		Quant ___q_p14 = {.i=(___c_s_1___l2 + 1)};
+		append(main___r2, ___q_p14);
+	}
+	list* main___primes = make_list();
+	for (int main___r2___l1 = 0; main___r2___l1 < main___r2->cur_size; main___r2___l1++) {
+		int64_t main___r2___l2 = getitem(main___r2, main___r2___l1).i;
+		int64_t main______o_l3 = 1;
+		for (int main___primes___l1 = 0; main___primes___l1 < main___primes->cur_size; main___primes___l1++) {
+			int64_t main___primes___l2 = getitem(main___primes, main___primes___l1).i;
+			if ((!((int64_t) main___r2___l2 % (int64_t) main___primes___l2))) {main______o_l3 = 0; goto ___lbl0;} //none
+		}
+___lbl0:
+		Quant ___q_p15 = {.i=main___r2___l2};
+		if (main______o_l3) {append(main___primes, ___q_p15);}
+	}
+		list* main______p_s9 = make_list();
+	for (int main___primes___l1 = 0; main___primes___l1 < main___primes->cur_size; main___primes___l1++) {
+		int64_t main___primes___l2 = getitem(main___primes, main___primes___l1).i;
+		Quant ___q_p16 = {.i=main___primes___l2};
+		append(main______p_s9, ___q_p16); //print
+	}
+	printf("{");
+	for (int main______p_s9_1 = 0; main______p_s9_1 < main______p_s9->cur_size; main______p_s9_1++) {
+		printf("%ld", getitem(main______p_s9, main______p_s9_1).i);
+		if (main______p_s9_1 != main______p_s9->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(main______p_s9);
+		list* main______p_s10 = make_list();
+	list* main______c_h3 = make_list();
+	for (int ___c_s_2___l2 = 0; ___c_s_2___l2 < 60; ___c_s_2___l2++){ //range
+		int64_t main___ri = ___c_s_2___l2; //inline variable
+		Quant ___q_p17 = {.i=main___ri};
+		if (((!((int64_t) main___ri % (int64_t) 3)) && ((int64_t) main___ri % (int64_t) 7))) {append(main______c_h3, ___q_p17);}
+	}
+	for (int main______c_h3___l1 = 0; main______c_h3___l1 < main______c_h3->cur_size; main______c_h3___l1++) {
+		int64_t main______c_h3___l2 = getitem(main______c_h3, main______c_h3___l1).i;
+		Quant ___q_p18 = {.i=main______c_h3___l2};
+		append(main______p_s10, ___q_p18); //print
+	}
+	printf("{");
+	for (int main______p_s10_1 = 0; main______p_s10_1 < main______p_s10->cur_size; main______p_s10_1++) {
+		printf("%ld", getitem(main______p_s10, main______p_s10_1).i);
+		if (main______p_s10_1 != main______p_s10->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(main______p_s10);
+		list* main______p_s11 = make_list();
+	list* main______c_h4 = make_list();
+	for (int ___c_s_3___l2 = 1; ___c_s_3___l2 <= 50; ___c_s_3___l2++){ //range
+		int64_t main___range_inline = (___c_s_3___l2 + 1); //inline variable
+		int64_t main______o_l4 = 1;
+		for (int main______c_h4___l1 = 0; main______c_h4___l1 < main______c_h4->cur_size; main______c_h4___l1++) {
+			int64_t main______c_h4___l2 = getitem(main______c_h4, main______c_h4___l1).i;
+			if ((!((int64_t) main___range_inline % (int64_t) main______c_h4___l2))) {main______o_l4 = 0; goto ___lbl1;} //none
+		}
+___lbl1:
+		Quant ___q_p19 = {.i=main___range_inline};
+		if (main______o_l4) {append(main______c_h4, ___q_p19);}
+	}
+	for (int main______c_h4___l1 = 0; main______c_h4___l1 < main______c_h4->cur_size; main______c_h4___l1++) {
+		int64_t main______c_h4___l2 = getitem(main______c_h4, main______c_h4___l1).i;
+		int64_t main___rec_inline = main______c_h4___l2; //inline variable
+		Quant ___q_p20 = {.i=main______c_h4___l2};
+		append(main______p_s11, ___q_p20); //print
+	}
+	printf("{");
+	for (int main______p_s11_1 = 0; main______p_s11_1 < main______p_s11->cur_size; main______p_s11_1++) {
+		printf("%ld", getitem(main______p_s11, main______p_s11_1).i);
+		if (main______p_s11_1 != main______p_s11->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(main______p_s11);
+	dict* main___fibs___d = make_dict();
+	int64_t main___fibs(int64_t main___i) {
+	Quant ___q_p21 = {.i=main___i};
+		if (dict_has(main___fibs___d, ___q_p21)) {
+			return dict_get(main___fibs___d, ___q_p21).i;
+		} else {
+			int64_t ___outp = (main___fibs((main___i - 2)) + main___fibs((main___i - 1)));
+			Quant ___q_p22 = {.i=___outp};
+			return dict_set(main___fibs___d, ___q_p21, ___q_p22).i;
+		}
+	}
+	Quant ___q_p23 = {.i=0};
+	Quant ___q_p24 = {.i=1};
+	dict_set(main___fibs___d, ___q_p23, ___q_p24);
+	Quant ___q_p25 = {.i=1};
+	Quant ___q_p26 = {.i=1};
+	dict_set(main___fibs___d, ___q_p25, ___q_p26);
+	for (int ___l_var = 0; ___l_var < 16; ___l_var++) printf("%ld, ", main___fibs(___l_var));
+	printf("%ld...\n", main___fibs(16));
+	printf("%ld\n", main___fibs(5));
+		int64_t main___fibs___l2 = 0;
+	for (int main___fibs___l2___l1 = 0; 1; main___fibs___l2___l1++) {
+		main___fibs___l2 = main___fibs(main___fibs___l2___l1);
+		if ((main___fibs___l2 > 9000)) goto ___lbl2; //first
 	}
 ___lbl2:
-	printf("%d\n", fibs___l2);
-	double square(double x) {
-		return (pow(x, 2));
+	printf("%ld\n", main___fibs___l2);
+	double square(double main___x) {
+		return (pow(main___x, 2));
 	}
-	printf("%f\n", square(7.3));
-		list* ___p_s8 = make_list();
-	for (int sia___l1 = 0; sia___l1 < sia->cur_size; sia___l1++) {
-		int64_t sia___l2 = getitem(sia, sia___l1).i;
-		Quant ___q_p20 = {.f=square(sia___l2)};
-		append(___p_s8, ___q_p20); //print
+	printf("%lf\n", square(7.3));
+		list* main______p_s12 = make_list();
+	for (int main___sia___l1 = 0; main___sia___l1 < main___sia->cur_size; main___sia___l1++) {
+		int64_t main___sia___l2 = getitem(main___sia, main___sia___l1).i;
+		Quant ___q_p27 = {.f=square(main___sia___l2)};
+		append(main______p_s12, ___q_p27); //print
 	}
 	printf("{");
-	for (int ___p_s8_1 = 0; ___p_s8_1 < ___p_s8->cur_size; ___p_s8_1++) {
-		printf("%f", getitem(___p_s8, ___p_s8_1).f);
-		if (___p_s8_1 != ___p_s8->cur_size-1) printf(", ");
+	for (int main______p_s12_1 = 0; main______p_s12_1 < main______p_s12->cur_size; main______p_s12_1++) {
+		printf("%lf", getitem(main______p_s12, main______p_s12_1).f);
+		if (main______p_s12_1 != main______p_s12->cur_size-1) printf(", ");
 	}
 	printf("}\n");
-	destroy_list(___p_s8);
-	int64_t ff(double x) {
-		return ((x < 2) ? 1 : (ff((x - 1)) + ff((x - 2))));
+	destroy_list(main______p_s12);
+	int64_t ff(double main___x) {
+		return ((main___x < 2) ? 1 : (ff((main___x - 1)) + ff((main___x - 2))));
 	}
-		int64_t number_of_divisors(int64_t x) {
-		int64_t ___o_l4 = 1;
-		list* ___c_h3 = make_list();
-		for (int ___c_s_4___l2 = 1; ___c_s_4___l2 <= x; ___c_s_4___l2++){ //mrange
-			int64_t r3 = (___c_s_4___l2 + 1); //inline variable
-			int64_t ___o_l5 = 1;
-			for (int ___c_h3___l1 = 0; ___c_h3___l1 < ___c_h3->cur_size; ___c_h3___l1++) {
-				int64_t ___c_h3___l2 = getitem(___c_h3, ___c_h3___l1).i;
-				if ((!((int) r3 % (int) ___c_h3___l2))) {___o_l5 = 0; goto ___lbl3;} //none
+		int64_t number_of_divisors(int64_t main___x) {
+		int64_t main______o_l5 = 1;
+		list* main______c_h5 = make_list();
+		for (int ___c_s_4___l2 = 1; ___c_s_4___l2 <= main___x; ___c_s_4___l2++){ //range
+			int64_t main___r3 = (___c_s_4___l2 + 1); //inline variable
+			int64_t main______o_l6 = 1;
+			for (int main______c_h5___l1 = 0; main______c_h5___l1 < main______c_h5->cur_size; main______c_h5___l1++) {
+				int64_t main______c_h5___l2 = getitem(main______c_h5, main______c_h5___l1).i;
+				if ((!((int64_t) main___r3 % (int64_t) main______c_h5___l2))) {main______o_l6 = 0; goto ___lbl3;} //none
 			}
 ___lbl3:
-			Quant ___q_p21 = {.i=r3};
-			if (___o_l5) {append(___c_h3, ___q_p21);}
+			Quant ___q_p28 = {.i=main___r3};
+			if (main______o_l6) {append(main______c_h5, ___q_p28);}
 		}
-		for (int ___c_h3___l1 = 0; ___c_h3___l1 < ___c_h3->cur_size; ___c_h3___l1++) {
-			int64_t ___c_h3___l2 = getitem(___c_h3, ___c_h3___l1).i;
-			int64_t all_primes = ___c_h3___l2; //inline variable
-				int64_t expon = 0;
-			for (expon = 0; 1; expon++) {
-				if (((int) x % (int) (pow(___c_h3___l2, expon)))) goto ___lbl4; //first
+		for (int main______c_h5___l1 = 0; main______c_h5___l1 < main______c_h5->cur_size; main______c_h5___l1++) {
+			int64_t main______c_h5___l2 = getitem(main______c_h5, main______c_h5___l1).i;
+			int64_t main___all_primes = main______c_h5___l2; //inline variable
+				int64_t main___expon = 0;
+			for (main___expon = 0; 1; main___expon++) {
+				if (((int64_t) main___x % (int64_t) (pow(main______c_h5___l2, main___expon)))) goto ___lbl4; //first
 			}
 ___lbl4:
-			if (1) {___o_l4 *= expon;} //product
+			main______o_l5 *= main___expon; //product
 		}
-		destroy_list(___c_h3);
-		return ___o_l4;
+		destroy_list(main______c_h5);
+		return main______o_l5;
 	}
-	printf("%d\n", number_of_divisors(840));
-		int64_t i = 0;
-	for (i = 0; 1; i++) {
-		if ((number_of_divisors(i) > 32)) goto ___lbl5; //first
+	printf("%ld\n", number_of_divisors(840));
+		int64_t main___i = 0;
+	for (main___i = 0; 1; main___i++) {
+		if ((number_of_divisors(main___i) > 32)) goto ___lbl5; //first
 	}
 ___lbl5:
-	printf("%d\n", i);
+	printf("%ld\n", main___i);
+	int64_t factorial(int64_t main___a) {
+		int64_t main___outp = 1;
+		for (int ___c_s_5___l2 = 1; ___c_s_5___l2 <= main___a; ___c_s_5___l2++){ //range
+			int64_t main___i = ___c_s_5___l2; //inline variable
+			main___outp *= main___i;
+		}
+		return main___outp;
+	}
+	printf("%ld\n", factorial(12));
+		int64_t factorial_ol(int64_t main___a) {
+		int64_t main______o_l7 = 1;
+		for (int ___c_s_6___l2 = 1; ___c_s_6___l2 <= main___a; ___c_s_6___l2++){ //range
+			main______o_l7 *= ___c_s_6___l2; //product
+		}
+		return main______o_l7;
+	}
+	printf("%ld\n", factorial_ol(12));
 	typedef struct {
 		double x;
 		double y;
 	} Vec2;
-		double magnitude(Vec2* v) {
-		return sqrt(((pow(v->x, 2)) + (pow(v->y, 2))));
+		double magnitude(Vec2* main___v) {
+		return sqrt(((pow(main___v->x, 2)) + (pow(main___v->y, 2))));
 	}
 	Vec2 ___s_p___s_p0 = {.x = 8, .y = 15};
 	Vec2* ___s_p___s_p0_1 = malloc(sizeof(Vec2));
 	memcpy(___s_p___s_p0_1, &___s_p___s_p0, sizeof(Vec2));
-	printf("%f\n", magnitude(___s_p___s_p0_1));
+	printf("%lf\n", magnitude(___s_p___s_p0_1));
 	typedef struct {
 		Vec2* v;
 		int64_t d;
@@ -454,96 +659,128 @@ ___lbl5:
 	Vec2 ___s_p___s_p2 = {.x = 17, .y = 4};
 	Vec2* ___s_p___s_p2_1 = malloc(sizeof(Vec2));
 	memcpy(___s_p___s_p2_1, &___s_p___s_p2, sizeof(Vec2));
-	ComplexContainer ___s_p___s_p1 = {.v = ___s_p___s_p2_1, .d = 5, .f = (-17.4)};
+	ComplexContainer ___s_p___s_p1 = {.v = ___s_p___s_p2_1, .d = 5, .f = (-(17.4))};
 	ComplexContainer* ___s_p___s_p1_1 = malloc(sizeof(ComplexContainer));
 	memcpy(___s_p___s_p1_1, &___s_p___s_p1, sizeof(ComplexContainer));
-	ComplexContainer* cc = ___s_p___s_p1_1;
-	printf("ComplexContainer(v: Vec2(x: %f, y: %f), d: %d, f: %f)\n", ((Vec2*) ((ComplexContainer*) cc)->v)->x, ((Vec2*) ((ComplexContainer*) cc)->v)->y, ((ComplexContainer*) cc)->d, ((ComplexContainer*) cc)->f);
-	dict* asd___d = make_dict();
-			Vec2* asd(int64_t i) {
-	Quant ___q_p22 = {.i=i};
-		if (dict_has(asd___d, ___q_p22)) {
-					return dict_get(asd___d, ___q_p22).s;
+	ComplexContainer* main___cc = ___s_p___s_p1_1;
+	printf("ComplexContainer(v: Vec2(x: %lf, y: %lf), d: %ld, f: %lf)\n", ((Vec2*) ((ComplexContainer*) main___cc)->v)->x, ((Vec2*) ((ComplexContainer*) main___cc)->v)->y, ((ComplexContainer*) main___cc)->d, ((ComplexContainer*) main___cc)->f);
+	dict* main___asd___d = make_dict();
+			Vec2* main___asd(int64_t main___i) {
+	Quant ___q_p29 = {.i=main___i};
+		if (dict_has(main___asd___d, ___q_p29)) {
+					return dict_get(main___asd___d, ___q_p29).s;
 		} else {
-	Vec2 ___s_p___s_p3 = {.x = (2 * i), .y = (pow(i, 2))};
+	Vec2 ___s_p___s_p3 = {.x = (2 * main___i), .y = (pow(main___i, 2))};
 	Vec2* ___s_p___s_p3_1 = malloc(sizeof(Vec2));
 	memcpy(___s_p___s_p3_1, &___s_p___s_p3, sizeof(Vec2));
 			Vec2* ___outp = ___s_p___s_p3_1;
-			Vec2* ___c_p0 = malloc(sizeof(Vec2));
-			memcpy(___c_p0, ___outp, sizeof(Vec2));
-			Quant ___q_p23 = {.s=___c_p0};
+			Vec2* main______c_p0 = malloc(sizeof(Vec2));
+			memcpy(main______c_p0, ___outp, sizeof(Vec2));
+			Quant ___q_p30 = {.s=main______c_p0};
 			free(___s_p___s_p3_1);
-			return dict_set(asd___d, ___q_p22, ___q_p23).s;
+			return dict_set(main___asd___d, ___q_p29, ___q_p30).s;
 		}
 	}
-		Vec2* asd___l2 = 0;
-	for (int asd___l2___l1 = 0; 1; asd___l2___l1++) {
-		asd___l2 = asd(asd___l2___l1);
-		if ((magnitude(asd___l2) > 30)) goto ___lbl6; //first
+		Vec2* main___asd___l2 = 0;
+	for (int main___asd___l2___l1 = 0; 1; main___asd___l2___l1++) {
+		main___asd___l2 = main___asd(main___asd___l2___l1);
+		if ((magnitude(main___asd___l2) > 30)) goto ___lbl6; //first
 	}
 ___lbl6:
-	printf("Vec2(x: %f, y: %f)\n", ((Vec2*) asd___l2)->x, ((Vec2*) asd___l2)->y);
-		Vec2* to_vec(int64_t x) {
-		Vec2 ___s_p___s_p4 = {.x = x, .y = x};
+	printf("Vec2(x: %lf, y: %lf)\n", ((Vec2*) main___asd___l2)->x, ((Vec2*) main___asd___l2)->y);
+		Vec2* to_vec(int64_t main___x) {
+		Vec2 ___s_p___s_p4 = {.x = main___x, .y = main___x};
 		Vec2* ___s_p___s_p4_1 = malloc(sizeof(Vec2));
 		memcpy(___s_p___s_p4_1, &___s_p___s_p4, sizeof(Vec2));
-		Vec2* ___c_p1 = malloc(sizeof(Vec2));
-		memcpy(___c_p1, ___s_p___s_p4_1, sizeof(Vec2));
+		Vec2* main______c_p1 = malloc(sizeof(Vec2));
+		memcpy(main______c_p1, ___s_p___s_p4_1, sizeof(Vec2));
 		free(___s_p___s_p4_1);
-		return ___c_p1;
+		return main______c_p1;
 	}
-	printf("Vec2(x: %f, y: %f)\n", ((Vec2*) to_vec(8))->x, ((Vec2*) to_vec(8))->y);
-		list* ___p_s9 = make_list();
-	for (int ___c_s_5 = 0; ___c_s_5 < 5; ___c_s_5++){
-		double ___c_s_6___l2 = ((1 - (-1)) * ((float)rand() / RAND_MAX)) + (-1); //random
-		Quant ___q_p24 = {.f=___c_s_6___l2};
-		append(___p_s9, ___q_p24); //print
+	printf("Vec2(x: %lf, y: %lf)\n", ((Vec2*) to_vec(8))->x, ((Vec2*) to_vec(8))->y);
+	Vec2* main______i_v0 = malloc(sizeof(Vec2));
+	scanf("Vec2(x: %lf, y: %lf)", &(((Vec2*) main______i_v0)->x), &(((Vec2*) main______i_v0)->y));
+	Vec2* main___v = main______i_v0;
+	printf("%lf\n", magnitude(main___v));
+		list* main______p_s13 = make_list();
+	for (int ___c_s_7 = 0; ___c_s_7 < 5; ___c_s_7++){
+		double ___c_s_8___l2 = ((1 - (-(1))) * ((float)rand() / RAND_MAX)) + (-(1)); //random
+		Quant ___q_p31 = {.f=___c_s_8___l2};
+		append(main______p_s13, ___q_p31); //print
 	}
 	printf("{");
-	for (int ___p_s9_1 = 0; ___p_s9_1 < ___p_s9->cur_size; ___p_s9_1++) {
-		printf("%f", getitem(___p_s9, ___p_s9_1).f);
-		if (___p_s9_1 != ___p_s9->cur_size-1) printf(", ");
+	for (int main______p_s13_1 = 0; main______p_s13_1 < main______p_s13->cur_size; main______p_s13_1++) {
+		printf("%lf", getitem(main______p_s13, main______p_s13_1).f);
+		if (main______p_s13_1 != main______p_s13->cur_size-1) printf(", ");
 	}
 	printf("}\n");
-	destroy_list(___p_s9);
-			list* ran_vecs = make_list();
-	for (int ___c_s_7 = 0; ___c_s_7 < 5000; ___c_s_7++){
-		double ___c_s_8___l2 = ((1 - (-1)) * ((float)rand() / RAND_MAX)) + (-1); //random
-		for (int ___c_s_9 = 0; ___c_s_9 < 500; ___c_s_9++){
-			double ___c_s_10___l2 = ((1 - (-1)) * ((float)rand() / RAND_MAX)) + (-1); //random
-	Vec2 ___s_p___s_p5 = {.x = ___c_s_8___l2, .y = ___c_s_10___l2};
+	destroy_list(main______p_s13);
+			list* main___ran_vecs = make_list();
+	for (int ___c_s_9 = 0; ___c_s_9 < 5000; ___c_s_9++){
+		double ___c_s_10___l2 = ((1 - (-(1))) * ((float)rand() / RAND_MAX)) + (-(1)); //random
+		for (int ___c_s_11 = 0; ___c_s_11 < 500; ___c_s_11++){
+			double ___c_s_12___l2 = ((1 - (-(1))) * ((float)rand() / RAND_MAX)) + (-(1)); //random
+	Vec2 ___s_p___s_p5 = {.x = ___c_s_10___l2, .y = ___c_s_12___l2};
 			Vec2* ___s_p___s_p5_1 = malloc(sizeof(Vec2));
 			memcpy(___s_p___s_p5_1, &___s_p___s_p5, sizeof(Vec2));
-			Vec2* ___c_p2 = malloc(sizeof(Vec2));
-			memcpy(___c_p2, ___s_p___s_p5_1, sizeof(Vec2));
-			Quant ___q_p25 = {.s=___c_p2};
-			append(ran_vecs, ___q_p25);
+			Vec2* main______c_p2 = malloc(sizeof(Vec2));
+			memcpy(main______c_p2, ___s_p___s_p5_1, sizeof(Vec2));
+			Quant ___q_p32 = {.s=main______c_p2};
+			append(main___ran_vecs, ___q_p32);
 		free(___s_p___s_p5_1);
 		}
 	}
-	int ___o_l6_counter = 0;
-	int64_t ___o_l6 = 0;
-	for (int ran_vecs___l1 = 0; ran_vecs___l1 < ran_vecs->cur_size; ran_vecs___l1++) {
-		Vec2* ran_vecs___l2 = getitem(ran_vecs, ran_vecs___l1).s;
-		___o_l6 += (((pow(ran_vecs___l2->x, 2)) + (pow(ran_vecs___l2->y, 2))) < 1); ___o_l6_counter++; //average
+	int ___o_l8_counter = 0;
+	int64_t main______o_l8 = 0;
+	for (int main___ran_vecs___l1 = 0; main___ran_vecs___l1 < main___ran_vecs->cur_size; main___ran_vecs___l1++) {
+		Vec2* main___ran_vecs___l2 = getitem(main___ran_vecs, main___ran_vecs___l1).s;
+		main______o_l8 += (((pow(main___ran_vecs___l2->x, 2)) + (pow(main___ran_vecs___l2->y, 2))) < 1); ___o_l8_counter++; //average
 	}
-	printf("%f\n", ((float) ___o_l6 / ___o_l6_counter * 4));
-	destroy_list(r1);
-	destroy_list(___c_h0);
-	destroy_list(r2);
-	destroy_list(primes);
-	destroy_list(___c_h1);
-	destroy_list(___c_h2);
-	destroy_dict(fibs___d);
+	printf("%lf\n", ((float) main______o_l8 / ___o_l8_counter * 4));
+	void check_if_negative(int64_t main___e) {
+	}
+	check_if_negative(6);
+	void check_if_divisible(int64_t main___a, int64_t main___b) {
+	}
+	check_if_divisible(11, 3);
+		list* main______p_s14 = make_list();
+	list* main______c_h6 = make_list();
+	for (int main___r2___l1 = 0; main___r2___l1 < main___r2->cur_size; main___r2___l1++) {
+		int64_t main___r2___l2 = getitem(main___r2, main___r2___l1).i;
+		Quant ___q_p33 = {.i=main___r2___l2};
+		if (is_square(main___r2___l2)) {append(main______c_h6, ___q_p33);}
+	}
+	for (int main______c_h6___l1 = 0; main______c_h6___l1 < main______c_h6->cur_size; main______c_h6___l1++) {
+		int64_t main______c_h6___l2 = getitem(main______c_h6, main______c_h6___l1).i;
+		Quant ___q_p34 = {.i=main______c_h6___l2};
+		append(main______p_s14, ___q_p34); //print
+	}
+	printf("{");
+	for (int main______p_s14_1 = 0; main______p_s14_1 < main______p_s14->cur_size; main______p_s14_1++) {
+		printf("%ld", getitem(main______p_s14, main______p_s14_1).i);
+		if (main______p_s14_1 != main______p_s14->cur_size-1) printf(", ");
+	}
+	printf("}\n");
+	destroy_list(main______p_s14);
+	destroy_list(main______c_h0);
+	destroy_list(main______c_h1);
+	destroy_list(main___r1);
+	destroy_list(main______c_h2);
+	destroy_list(main___r2);
+	destroy_list(main___primes);
+	destroy_list(main______c_h3);
+	destroy_list(main______c_h4);
+	destroy_dict(main___fibs___d);
 	free(___s_p___s_p0_1);
 	free(___s_p___s_p2_1);
 	free(___s_p___s_p1_1);
-	for (int asd___d___l1 = 0; asd___d___l1 < asd___d->cur_size; asd___d___l1++) {
-		free(asd___d->pairs[asd___d___l1].value.s);
+	for (int main___asd___d___l1 = 0; main___asd___d___l1 < main___asd___d->cur_size; main___asd___d___l1++) {
+		free(main___asd___d->pairs[main___asd___d___l1].value.s);
 	}
-	destroy_dict(asd___d);
-	for (int ran_vecs___l1 = 0; ran_vecs___l1 < ran_vecs->cur_size; ran_vecs___l1++) {
-		free(getitem(ran_vecs, ran_vecs___l1).s);
+	destroy_dict(main___asd___d);
+	for (int main___ran_vecs___l1 = 0; main___ran_vecs___l1 < main___ran_vecs->cur_size; main___ran_vecs___l1++) {
+		free(getitem(main___ran_vecs, main___ran_vecs___l1).s);
 	}
-	destroy_list(ran_vecs);
+	destroy_list(main___ran_vecs);
+	destroy_list(main______c_h6);
 }

@@ -1,0 +1,368 @@
+##########################################################
+#                         Uberort                        #
+##########################################################
+#Uberort v1.2.0 documentation
+#Uberort is a mathematical and functional programming language made as a fun hobby project
+#It has an open-source compiler written in python that compiles the language to efficient c code
+#The uniqueness of the language is mostly in the way it handles containers: through superpositions. More about them later
+
+import math.number_theory
+#First of all, we import a package, though for most of the example code it won't be used
+
+#The variables are just like in other languages with Z standing for int64s and R standing for doubles
+ia in Z = 4
+fb in R = 7.0
+#Or you can just use type inference
+ti_a := 6.75
+#There are also strings, though right now you can't really do anything else with them besides storing and printing
+print "Hello World!"
+#There are no booleans, this language rather uses the '0 is false, everything else is true' type of logic
+
+#The arithmetic is what you'd expect from a language
+print ia + fb
+#>>> 11.000000
+
+# +   addition
+# -   subtraction
+# *   multiplication
+# **  exponentiation
+# /   long division (float output)
+# //  division (int output)
+# %   modulo
+# !%  is divisible by
+# ++  concatenation (used on superpositions)
+
+#And logic works in a standard way too
+# <= == >= < != >   comparisons
+# &&  and
+# ||  or
+# !   not
+
+#Now, let's get into the unique features of Uberort
+
+##########################################################
+#                     Superpositions                     #
+##########################################################
+#Superpositions are the main container type of the language
+#Though they aren't really containers but rather variables that can hold as many values simultaneously as you need
+#Understanding them is necessary for using this language in the right way, but when you understand them, you're half-way there
+
+#sia will now hold the values 1, 3, 5 and 9 all at once
+sia in Z = {1, 3, 5, 9}
+sib := {1, 9, 40}
+print sia + sib
+#>>> {2, 10, 41, 4, 12, 43, 6, 14, 45, 10, 18, 49}
+#When adding sia and sib together you added each pair of possible values together resulting in even more possible states
+print sin(sia)
+#>>> {0.841471, 0.141120, -0.958924, 0.412118}
+#When calling a function you call the function for every possible state of sia
+print sia ++ sib
+#>>> {1, 3, 5, 9, 1, 9, 40}
+#You can also concatenate superpositions
+sib ++= sia + sib
+print sib
+#>>> {1, 9, 40, 2, 10, 41, 4, 12, 43, 6, 14, 45, 10, 18, 49}
+
+##########################################################
+#      Differences between superpositions and lists      #
+##########################################################
+#Now, you may argue that superpositions are just lists with Cartesian operations but the real difference between lists and superpositions can be seen when doing multiple operations on the same superposition
+#For example, you may think that this would result in a cartesian sum:
+print sia + sia
+#>>> {2, 6, 10, 18}
+#The reason for this is that the compiler won't check for values where the state of sia is different in the 2 times it's referenced
+#This is a lame example as you could just multiply sia by 2 but here is another example:
+print sia + sin(sia)
+#>>> {1.841471, 3.141120, 4.041076, 9.412118}
+#If sia was just a list, then sin would return another list and we would get many unwanted values when calculating the cartesian sum
+#But superpositions are smarter than that and it will print out only 1 value for each state of sia
+
+#If you do want to consider some references to sia as different superpositions then you can do this:
+print sia + sin(sia) + sia2 ** 2 + cos(sia2) with sia as sia2
+#>>> {3.381773, 4.681422, 5.581378, 10.952421, 9.851478, 11.151128, 12.051083, 17.422126, 27.125133, 28.424782, 29.324738, 34.695781, 81.930341, 83.229990, 84.129945, 89.500988}
+#Here, the 2 references to sia, and the 2 references to sia2 will be considered as the same, but the references to sia and sia2 won't
+
+#What if you want to do the exact opposite?
+sia3 := {0, 1, 2, 3}
+#What if you wanted to do element-wise operations on sia and sia3?
+#When you added together 2 instances of sia, the compiler didn't look at cases where the 2 instances had different values
+#To achieve similar behaviour you can pair the elements of sia and sia3 together so that the compiler won't look at cases where the state of sia and sia3 aren't paired
+print sia + sin(sia) + sia3 ** 2 + cos(sia3) with pair(sia, sia3)
+#>>> {2.841471, 4.681422, 7.624929, 17.422126}
+
+##########################################################
+#                    Loops, branches                     #
+##########################################################
+#Loops and branches are entirely avoidable in Uberort, but you can still use them
+#Branches are pretty straight-forward
+if ia > 0
+    print "+"
+    #>>> +
+elif ia < 0
+    print "-"
+else
+    print "0"
+end
+
+#You can loop through the different states of a superposition, making it only be in a single state in each iteration
+sum_of_sia := 0
+loop sia
+    sum_of_sia += sia
+end
+print sum_of_sia
+#>>> 18
+
+#These 2 code snippets do the exact same things as the code above:
+sum_of_sia = 0
+sum_of_sia += sia
+print sum_of_sia
+#>>> 18
+#In that example, you added each possible state of sia to sum_of_sia, essentially summing it
+#But this built-in function works just completely fine, and is also much more readable than the example above
+print sum(sia)
+#>>> 18
+#You didn't necessarily need looping in that example but if you need to keep the same state of a superposition for multiple lines, then looping is much more essential
+
+#If you want to keep the original superposition, you can just make a copy of sia just like when trying to force a cartesian sum
+sum_of_sia = 0
+loop sia as i
+    sum_of_sia += i
+end
+print sum_of_sia
+#>>> 18
+
+#And if you want to loop through different superpositions at the same time you can use the pair function in loops too
+product_sum := 0
+loop pair(sia, sia3)
+    product_sum += sia * sia3
+end
+print product_sum
+#>>> 40
+
+##########################################################
+#    Filtering, comprehensions and built-in functions    #
+##########################################################
+#Instead of writing loops for everything you can use filtering and built-in functions
+#You can filter with 'where'; put the 'where' between curly braces to make it a superposition comprehension
+
+#Let's start with a simple smallest common multiple
+a := 10
+b := 15
+r1 := mrange(smaller(a, b)) #Store all the values from 1 to the smaller of a and b
+print a*b // max(r1 where a !% r1 && b !% r1) #The second half gets the biggest number of r1 that's both a divisor of a and b
+#>>> 30
+
+#Here is a simple superposition comprehension
+print {r1 where a !% r1 && b !% r1}
+#>>> {1, 5}
+
+#And this finds all the primes from 2 to 51
+r2 := mrange(50)+1
+#Superposition comprehensions can contain self-referencing, just like this
+primes in Z = {r2 where none(r2 !% primes)}
+print primes
+#>>> {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47}
+#Just keep in mind not to use type inference for self-referencing variables
+
+#You can also circumvent having to write another line for a variable definition by using a with and then creating the variables using the keyword as
+print {ri where ri !% 3 && ri % 7 with range(60) as ri}
+#>>> {3, 6, 9, 12, 15, 18, 24, 27, 30, 33, 36, 39, 45, 48, 51, 54, 57}
+
+#If you want to make the inline variable definition contain self-referencing, you'll need to declare its type to let the compiler know it even before it's used
+#In this example we generate all the primes from 2 to 51 in a single line
+print {range_inline where none(range_inline !% rec_inline) with mrange(50)+1 as range_inline} as rec_inline in {Z}
+#>>> {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47}
+
+#Built-in functions in the current version are:
+#Functions for simple numbers:
+#   -sqrt(a) - calculates the square root of the number
+#   -greater(a, b) - results in the greater number
+#   -smaller(a, b) - results in the smaller number
+#   -abs(a) - gets the absolute value of a
+#   -log(a, b) - returns the log of a with base b
+#   -range(a, b) - results in a superposition of all numbers from 0 to a-1, or in a superposition from a to b-1 if b is given
+#   -mrange(a) - results in a superposition of all numbers from 1 to a, or in a superposition from a to b if b is given
+#   -random(a, b, c) - results in a superposition of c random floats between a and b (returns single value if c not given)
+#   -randi(a, b) - results in a superposition of b random ints between 0 and a-1 (returns single value if b not given)
+#   -All the basic trigonometric functions: sin, cos, tan, asin, acos, atan, tan2 - they work with radians but you can also easily use degrees like this: sin(90°)
+#Functions for superpositions:
+#   -sum(a) - sums together all values of a
+#   -product(a) - multiplies together all values of a
+#   -average(a) - averages the values of a
+#   -all(a) - whether a is always true
+#   -any(a) - whether a is ever true
+#   -none(a) - whether a is always false
+#   -max(a) - finds the biggest value of a
+#   -max(a: b) - finds the a that has the biggest value of b
+#   -len(a) - gets the length of a
+#   -pair(a, b...) - pairs together the respective elements of superpositions
+#Functions for sequences:
+#   -first(a: b) - finds the first element of sequence a where b is true
+#Other:
+#   -time() - returns a float of the current time where 1 difference means a second
+#   -input(a) - takes in an input from the user, a is the type of data to take in: input(Z) or input(R)
+#
+#There are also some built-in constants:
+#   -PI
+#   -EULER
+
+##########################################################
+#                        Sequences                       #
+##########################################################
+#Sequences are infinite sequences of lazy-evaluated values
+#Sequences can use recursion in their definition
+
+#After defining the sequence, you can use with to provide default values
+fibs[i] in Z = fibs[i-2] + fibs[i-1] with 0:1, 1:1
+print fibs
+#>>> 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597...
+print fibs[5]
+#>>> 8
+print first(fibs: fibs > 9000)
+#>>> 10946
+
+#You can use type inference in sequences too, but don't use it on recursive ones
+
+##########################################################
+#                        Functions                       #
+##########################################################
+#There are 2 types of functions in this language
+
+#This is the first one, a clear one liner:
+def square(x in R) in R => x**2
+print square(7.3)
+#>>> 53.290000
+#Mapping has never been easier
+print square(sia)
+#>>> {1.000000, 9.000000, 25.000000, 81.000000}
+
+#You can leave out the 'in R' part in the square function to use type inference, but again, you can't use type inference in case of recursion:
+def ff(x in R) in Z => x < 2 ? 1 : ff(x-1) + ff(x-2)
+
+#Here is an overcomplicated and very inefficient function that calculates the number of divisors of a number to showcase how you can link together different features
+def number_of_divisors(x in Z) => product(first(expon in N: x % all_primes**expon) with {r3 where none(r3 !% all_primes) with mrange(x)+1 as r3} as all_primes in {Z})
+print number_of_divisors(840)
+#>>> 32
+print first(i in N: number_of_divisors(i) > 32)
+#>>> 1260
+
+#The other type of functions are the multiple line functions, for when you can't or don't want to write the function in a single line
+def factorial(a in Z) in Z
+    outp := 1
+    loop mrange(a) as i
+        outp *= i
+    end
+    return outp
+end
+print factorial(12)
+#>>> 479001600
+
+#It would look like this in a one-liner:
+def factorial_ol(a in Z) => product(mrange(a))
+print factorial_ol(12)
+#>>> 479001600
+
+##########################################################
+#                         Structs                        #
+##########################################################
+#You can make simple structs to work with complex data types
+
+struct Vec2 = [x in R, y in R]
+def magnitude(v in Vec2) => sqrt(v.x**2 + v.y**2)
+print magnitude(Vec2(x:8, y:15))
+#>>> 17.000000
+struct ComplexContainer = [v in Vec2, d in Z, f in R]
+cc := ComplexContainer(v: Vec2(x:17, y:4), d: 5, f: -17.4)
+print cc
+#>>> ComplexContainer(v: Vec2(x: 17.000000, y: 4.000000), d: 5, f: -17.400000)
+asd[i] := Vec2(x:2*i, y:i**2)
+print first(asd: magnitude(asd) > 30)
+#>>> Vec2(x: 12.000000, y: 36.000000)
+def to_vec(x in Z) => Vec2(x:x, y:x)
+print to_vec(8)
+#>>> Vec2(x: 8.000000, y: 8.000000)
+
+#You can even read in structs, just make sure to provide the attributes in the same order as in their definition when reading them in
+v := input(Vec2)
+#<<< Vec2(x: 4.0, y: 3.0)
+print magnitude(v)
+#>>> 5.000000
+
+##########################################################
+#                      Randomization                     #
+##########################################################
+print random(-1, 1, 5)
+#>>> {-0.959323, 0.398504, 0.474822, -0.198824, 0.988114}
+ran_vecs := Vec2(x:random(-1, 1, 5000), y:random(-1, 1, 500))
+print average(ran_vecs.x**2 + ran_vecs.y**2 < 1) * 4
+#>>> 3.141662
+
+##########################################################
+#                     Error handling                     #
+##########################################################
+#Some minimal error handling is implemented in Uberort
+#The Uberort code can be compiled in 2 ways: normal and debug. To make compile the code in debug mode simply make the first line of the code be 'debug'
+#I went with this choice because I didn't want 2 separate compilers, and I didn't want to make you waste time by typing 'debug' every time you want to debug your code
+
+#There are 2 statements to use for debugging: check and raise
+
+#The check statement checks a condition and if it is true, it raises an error
+def check_if_negative(e in Z)
+    check e == 0 => "Value is negative"
+end
+check_if_negative(6)
+
+#Now, we won't get anything, but if we were to be in debug mode, and we provided 0 to check_if_zero, then we would get this error:
+#>>> Runtime error on line 311: Value is negative
+#>>> main -> check_if_negative -> Error
+#The error message provides you where the error occurred, the error message you've written, and tells you that the error was in the function 'check_if_negative' which was called in main
+#If there were more functions called when that error occurred, all of them would be stated
+
+#The other error handling statement, raise, would look like this:
+#raise "Some error"
+#Though I commented it out so that it doesn't raise an error
+#And we would get this error:
+#>>> Runtime error on line 322: Some error
+#Or this error if we were in debug mode:
+#>>> Runtime error on line 322: Some error
+#>>> main -> Error
+
+#You can also provide a custom behaviours for check statements, though you can't nest them:
+def check_if_divisible(a in Z, b in Z)
+    check a !% b
+        raise "The first value is divisible by the second value" #Code won't stop till the end of check statement
+        print a
+        print b
+    end
+end
+
+check_if_divisible(11, 3)
+#If we were in debug mode and we wrote 12 instead of 11, we would get this error:
+#>>> Runtime error on line 333: The first value is divisible by the second value
+#>>> main -> check_if_divisible -> Error
+#>>> 12
+#>>> 3
+
+#When you are in debug mode, the code tracks all the function calls and runs all the check statements, which causes a minor overhead
+#But if you write a version of your code that you're sure is stable, you can compile it in normal mode to make it faster:
+#-The compiled code won't track which functions were called
+#-All the check statements will be skipped during compilation (the raise statements are kept in normal mode too, but they don't provide the call stack)
+
+##########################################################
+#                        Packages                        #
+##########################################################
+#You can make packages in Uberort.
+#We didn't use them throughout the code, but we imported math.number_theory, which contains functions like this:
+
+print {r2 where is_square(r2)}
+#>>> {4, 9, 16, 25, 36, 49}
+
+#For checking out what a package looks like, or for more example code, see math.ube
+
+##########################################################
+#                    Future of Uberort                   #
+##########################################################
+#Uberort will likely get a few updates in the future, adding a few features, fixing some yet unknown bugs, maybe improving some aspects of the language, but I don't plan to change this language completely
+#After finishing Uberort I may start working on Uberort Sharp, the object-oriented variant of Uberort
+#Planned features for Uberort Sharp includes classes, inheritance, error-handling, polymorphism and dynamic variables
+#But for now I'm rather focusing on designing this language to reach its potentials
